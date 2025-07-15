@@ -135,6 +135,7 @@ if conversion_value > 0:
 
 # ——— Results Summary & Visualization ———
 st.header("📊 Results Summary")
+# Summary outputs
 if simple_mode:
     st.markdown(f"**Expected lift:** {rel_lift:.2f}%")
     st.markdown(f"**Chance Variant > Control:** {decision_prob*100:.1f}%")
@@ -143,7 +144,6 @@ if simple_mode:
         st.caption("Projected monthly gain based on test traffic.")
         st.markdown(f"📈 **Expected annual gain:** £{annual_gain:,.2f}")
         st.caption("Projected annual gain based on test traffic.")
-
     # Decision logic
     if decision_prob >= prob_threshold:
         st.success("✅ Variant likely outperforms Control.")
@@ -152,10 +152,9 @@ if simple_mode:
         st.caption("High confidence that the control is better. Revert traffic to Control or test new ideas.")
     else:
         st.warning("⚠️ Insufficient confidence that Variant outperforms Control.")
-
     # Robustness check
     if robust:
-        st.success("🔒 Result is robust: precise, significant, and meaningful.")
+        st.success("🔒 Result is robust: precise, significant, meaningful.")
     else:
         if no_more_traffic:
             if decision_prob >= prob_threshold:
@@ -165,9 +164,20 @@ if simple_mode:
                 st.warning("⚠️ Variant underperforms Control—do NOT implement Variant but monitor and test alternatives.")
                 st.caption("Based on current data, Control is stronger. You may switch back or explore new variants.")
         else:
-            st.warning("🚧 Result not yet robust—consider collecting more data.")
+            st.warning("🚧 Not yet robust—consider collecting more data.")
             if days_needed:
                 st.markdown(f"🔍 Collect ~{extra_vis:,} more visitors (~{days_needed} days) for robust results.")
+else:
+    # Detailed statistical view
+    st.subheader("🧮 Detailed Metrics")
+    st.write(f"- **Expected lift**: {rel_lift:.2f}%")
+    st.write(f"- **Absolute lift**: {abs_lift:.4f}")
+    st.write(f"- **Probability Variant > Control**: {decision_prob*100:.2f}%")
+    st.write(f"- **{confidence_choice}% Credible Interval**: [{ci_low:.4f}, {ci_high:.4f}] (width {ci_width:.4f})")
+    st.caption("A narrower CI indicates greater precision.")
+    st.write(f"- **ROPE overlap**: {rope_overlap*100:.1f}%")
+    st.write(f"- **Statistically significant**: {statsig}")
+    st.write(f"- **Robust**: {robust}")
 st.markdown("---")
 # Posterior distributions
 x = np.linspace(0, max(mean_a, mean_b)*1.5, 1000)
