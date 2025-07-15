@@ -18,9 +18,9 @@ st.markdown("---")
 col1, col2 = st.columns(2)
 with col1:
     simple_mode = st.checkbox("Show plain-English explanations", value=True)
-    no_more_traffic = st.checkbox("I don’t have more traffic—interpret result anyway", value=False)
+    no_more_traffic = st.checkbox("I don’t have more traffic—interpret result anyway", value=True)
 with col2:
-    show_robustness_explanation = st.checkbox("Explain Robustness Criteria", value=False)
+    show_robustness_explanation = st.checkbox("Explain Robustness Criteria", value=True)
     show_decision_mode = st.checkbox("Show Decision Guidance", value=True)
 st.markdown("---")
 
@@ -151,6 +151,7 @@ if simple_mode:
     else:
         if no_more_traffic:
             st.warning("⚠️ Promising but not robust—proceed with caution.")
+            st.caption("Consider limiting exposure, monitoring metrics closely, and planning follow-up tests to verify performance before full rollout.")
         else:
             st.warning("🚧 Not yet robust—consider more data.")
             if days_needed:
