@@ -24,12 +24,14 @@ st.markdown("""
 Use **Bayesian analysis** to make clear, data-driven decisions in A/B testing.  
 No jargon—just straightforward insights.
 """)
+st.write("")  # spacing
 
 # Mode toggles
 simple_mode = st.checkbox("Show plain-English explanations", value=True)
 show_robustness_explanation = st.checkbox("Explain Robustness Criteria", value=False)
 show_decision_mode = st.checkbox("Show Decision Guidance", value=True)
 no_more_traffic = st.checkbox("I don’t have more traffic—interpret result anyway", value=False)
+st.write("")  # spacing
 
 # Optional business value input
 conversion_value = st.number_input(
@@ -37,6 +39,7 @@ conversion_value = st.number_input(
     min_value=0.0, value=0.0, step=0.1,
     help="Enter how much each conversion is worth to estimate monetary impact."
 )
+st.write("")  # spacing
 
 # 1. Input data
 st.header("1. Enter Results from Your A/B Test")
@@ -53,6 +56,7 @@ with col1:
 with col2:
     visitors_b = st.number_input("Visitors to B (Variant)", min_value=1, value=1000)
     conversions_b = st.number_input("Conversions from B", min_value=0, value=70)
+st.write("")  # spacing
 
 # 2. Prior beliefs
 st.header("2. (Optional) Prior Beliefs")
@@ -70,6 +74,7 @@ with col3:
     alpha_prior = st.number_input("Prior Alpha (α)", min_value=0.01, value=1.0)
 with col4:
     beta_prior = st.number_input("Prior Beta (β)", min_value=0.01, value=1.0)
+st.write("")  # spacing
 
 # 3. Confidence & robustness
 st.header("3. Confidence & Robustness")
@@ -85,6 +90,7 @@ robust_width_target = st.slider(
     value={95:0.01, 90:0.012, 80:0.015}[confidence_choice], step=0.001,
     help="A narrower interval means more precise estimates."
 )
+st.write("")  # spacing
 
 # 4. Practical significance (ROPE)
 st.header("4. Practical Significance (ROPE)")
@@ -94,6 +100,7 @@ practical_effect_display = st.slider(
     help="ROPE = range where differences are too small to matter."
 )
 practical_effect = practical_effect_display / 100.0
+st.write("")  # spacing
 
 # 5. Test duration
 st.header("5. Test Duration")
@@ -101,6 +108,7 @@ test_days = st.number_input(
     "Days test has been running:", min_value=1, value=7,
     help="Used to estimate how many more days you need for reliable results."
 )
+st.write("")  # spacing
 
 # Bayesian calculations
 alpha_a = alpha_prior + conversions_a
@@ -122,6 +130,7 @@ ci_width = ci_high - ci_low
 rope_overlap = np.mean((delta > -practical_effect) & (delta < practical_effect))
 statsig = (ci_low > 0) or (ci_high < 0)
 robust = statsig and (ci_width < robust_width_target) and (rope_overlap < 0.95)
+st.write("")  # spacing
 
 # Estimate extra time needed
 total_vis = visitors_a + visitors_b
@@ -130,6 +139,7 @@ needed_vis = int(total_vis * scale)
 extra_vis = max(needed_vis - total_vis, 0)
 avg_vis_day = total_vis / test_days
 days_needed = int(np.ceil(extra_vis / avg_vis_day)) if avg_vis_day>0 else None
+st.write("")  # spacing
 
 # Expected monetary impact
 exp_gain = None
@@ -155,7 +165,7 @@ if simple_mode:
         else:
             st.warning("🚧 Result not yet robust—consider more data.")
             if days_needed:
-                st.write(f" Collect ~{extra_vis:,} more visitors (~{days_needed} days). ")
+                st.write(f"Collect ~{extra_vis:,} more visitors (~{days_needed} days). ")
 else:
     st.write(f"Expected lift: {rel_lift:.2f}%")
     st.write(f"Absolute lift: {abs_lift:.4f}")
@@ -164,9 +174,10 @@ else:
     st.write(f"ROPE overlap: {rope_overlap*100:.1f}%")
     st.write(f"Statistically significant: {statsig}")
     st.write(f"Robust: {robust}")
+st.write("")  # spacing
 
 if show_robustness_explanation:
-    st.info("Robust means: credible interval excludes 0, is narrow enough, and effect is meaningful.")
+    st.info("**Robust =** credible interval excludes 0, is narrow enough, and effect is meaningful.")
 
 if show_decision_mode:
     st.subheader("🧠 Decision Guidance")
@@ -176,6 +187,7 @@ if show_decision_mode:
         st.info("Consider action if benefits outweigh risks.")
     else:
         st.warning("Hold off: not enough evidence for safe decision.")
+st.write("")  # spacing
 
 # Visualizations
 st.header("📈 Visualizations")
