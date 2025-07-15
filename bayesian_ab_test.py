@@ -176,7 +176,7 @@ else:
     st.subheader("Detailed Statistics")
     st.write(f"- Expected lift: {rel_lift:.2f}%")
     st.write(f"- Absolute lift: {abs_lift:.4f}")
-    st.write(f"- Probability B > A: {decision_prob*100:.2f}%")
+    st.write(f"- Bayesian probability B > A: {decision_prob*100:.2f}%")
     st.write(f"- {confidence_choice}% credible interval: [{ci_low:.4f}, {ci_high:.4f}] (width {ci_width:.4f})")
     st.caption("A narrower interval indicates more precise estimates.")
     st.write(f"- ROPE overlap: {rope_overlap*100:.1f}%")
