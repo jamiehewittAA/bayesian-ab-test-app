@@ -95,11 +95,6 @@ test_days = st.number_input("Days test has been running", min_value=1, value=7,
     help="Estimate days needed if more precision required.")
 st.markdown("---")
 
-# 6. Business Value
-st.header("6. Business Value (Optional)")
-conversion_value = conversion_value  # reused input
-st.markdown("---")
-
 # ——— Perform Bayesian Calculations ———
 alpha_a = alpha_prior + conversions_a
 beta_a  = beta_prior + visitors_a - conversions_a
