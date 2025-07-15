@@ -33,20 +33,20 @@ st.markdown("---")
 
 # 1. Test Data Inputs
 st.header("1. Test Data")
-st.markdown("Enter visitors and conversions for both variants.")
+st.markdown("Enter visitors and conversions for Control and Variant.")
 with st.expander("Why these matter", expanded=False):
     st.markdown("""
-    - **Visitors**: Number of users shown each variant.  
+    - **Visitors**: Number of users shown each version.  
     - **Conversions**: Users who completed your goal (e.g., purchase).  
-    More data = more reliable results.
+    More data leads to more reliable insights.
 """)
 col3, col4 = st.columns(2)
 with col3:
-    visitors_a = st.number_input("Visitors to A (Control)", min_value=1, value=1000)
-    conversions_a = st.number_input("Conversions from A", min_value=0, value=50)
+    visitors_a = st.number_input("Visitors (Control)", min_value=1, value=1000)
+    conversions_a = st.number_input("Conversions (Control)", min_value=0, value=50)
 with col4:
-    visitors_b = st.number_input("Visitors to B (Variant)", min_value=1, value=1000)
-    conversions_b = st.number_input("Conversions from B", min_value=0, value=70)
+    visitors_b = st.number_input("Visitors (Variant)", min_value=1, value=1000)
+    conversions_b = st.number_input("Conversions (Variant)", min_value=0, value=70)
 st.markdown("---")
 
 # 2. Prior Beliefs
@@ -76,7 +76,7 @@ ci_low_pct, ci_high_pct = ci_tail, 100 - ci_tail
 robust_width_target = st.slider(
     f"Max CI width for robust result at {confidence_choice}%", 0.005, 0.03,
     value={95:0.01,90:0.012,80:0.015}[confidence_choice], step=0.001,
-    help="A narrow interval means precise estimate."
+    help="A narrow CI means a more precise estimate."
 )
 st.markdown("---")
 
@@ -84,7 +84,7 @@ st.markdown("---")
 st.header("4. Practical Impact (ROPE)")
 practical_display = st.slider(
     "Ignore changes smaller than (%)", 0.0, 5.0, 0.5, 0.1,
-    help="ROPE = differences too small to matter."
+    help="ROPE = range where differences are too small to matter."
 )
 practical_effect = practical_display / 100.0
 st.markdown("---")
@@ -92,7 +92,8 @@ st.markdown("---")
 # 5. Test Duration
 st.header("5. Test Duration")
 test_days = st.number_input("Days test has been running", min_value=1, value=7,
-    help="Estimate days needed if more precision required.")
+    help="Estimate days needed if more precision is required."
+)
 st.markdown("---")
 
 # ——— Perform Bayesian Calculations ———
@@ -136,17 +137,21 @@ if conversion_value > 0:
 st.header("📊 Results Summary")
 if simple_mode:
     st.markdown(f"**Expected lift:** {rel_lift:.2f}%")
-    st.markdown(f"**Chance B > A:** {decision_prob*100:.1f}%")
+    st.markdown(f"**Chance Variant > Control:** {decision_prob*100:.1f}%")
     if conversion_value > 0:
         st.markdown(f"💰 **Expected monthly gain:** £{monthly_gain:,.2f}")
         st.caption("Projected monthly gain based on test traffic.")
         st.markdown(f"📈 **Expected annual gain:** £{annual_gain:,.2f}")
         st.caption("Projected annual gain based on test traffic.")
+    # Determine and display which variant is better or if inconclusive
     if decision_prob >= prob_threshold:
-        st.success("✅ B likely outperforms A.")
+        st.success("✅ Variant likely outperforms Control.")
+    elif (1 - decision_prob) >= prob_threshold:
+        st.error("⛔ Control likely outperforms Variant — do NOT implement Variant.")
+        st.caption("High confidence that the control is better. Revert traffic to Control or test new ideas.")
     else:
-        st.warning("⚠️ Insufficient confidence in B > A.")
-    if robust:
+        st.warning("⚠️ Insufficient confidence that Variant outperforms Control.")
+    # Robustness check:
         st.success("🔒 Result is robust: precise, significant, meaningful.")
     else:
         if no_more_traffic:
@@ -154,39 +159,39 @@ if simple_mode:
                 st.warning("⚠️ Promising but not robust—proceed with caution.")
                 st.caption("Consider limiting exposure, monitoring metrics closely, and planning follow-up tests to verify performance before full rollout.")
             else:
-                st.warning("⚠️ B is unlikely to outperform A—consider focusing on Variant A or gathering more data.")
-                st.caption("Based on current data, Variant B underperforms. You might switch traffic back to A or test new variants.")
+                st.warning("⚠️ Variant underperforms Control—consider focusing on Control or gathering more data.")
+                st.caption("Based on current data, the variant is less effective than the control. Consider reverting or testing new variants.")
         else:
-            st.warning("🚧 Not yet robust—consider more data.")
+            st.warning("🚧 Not yet robust—consider collecting more data.")
             if days_needed:
                 st.markdown(f"🔍 Collect ~{extra_vis:,} more visitors (~{days_needed} days) for robust results.")
 else:
     st.subheader("Detailed Metrics")
     st.write(f"- Expected lift: {rel_lift:.2f}%")
     st.write(f"- Absolute lift: {abs_lift:.4f}")
-    st.write(f"- P(B>A): {decision_prob*100:.2f}%")
+    st.write(f"- P(Variant>Control): {decision_prob*100:.2f}%")
     st.write(f"- {confidence_choice}% CI: [{ci_low:.4f}, {ci_high:.4f}] (width {ci_width:.4f})")
     st.write(f"- ROPE overlap: {rope_overlap*100:.1f}%")
     st.write(f"- Stat sig: {statsig}")
     st.write(f"- Robust: {robust}")
 
 if show_robustness_explanation:
-    st.info("**Robust** = significant + precise + practically meaningful.")
+    st.info("**Robust** = statistically significant, precise (narrow CI), and practically meaningful.")
 if show_decision_mode:
     st.subheader("🧠 Decision Guidance")
     if robust:
-        st.success("Implement B — reliable result.")
+        st.success("Implement Variant — reliable result.")
     elif decision_prob >= prob_threshold and rope_overlap < 0.5:
-        st.info("Consider B if benefits outweigh risks.")
+        st.info("Consider Variant if benefits outweigh risks.")
     else:
-        st.warning("Hold off — not enough evidence.")
+        st.warning("Hold off — not enough evidence to implement Variant.")
 
 st.markdown("---")
 # Posterior distributions
 x = np.linspace(0, max(mean_a, mean_b)*1.5, 1000)
 fig1, ax1 = plt.subplots(figsize=(6,3))
-ax1.plot(x, beta.pdf(x, alpha_a, beta_a), label='A')
-ax1.plot(x, beta.pdf(x, alpha_b, beta_b), label='B')
+ax1.plot(x, beta.pdf(x, alpha_a, beta_a), label='Control')
+ax1.plot(x, beta.pdf(x, alpha_b, beta_b), label='Variant')
 ax1.set_xlabel('Conversion rate')
 ax1.set_ylabel('Density')
 ax1.legend()
@@ -196,7 +201,7 @@ st.pyplot(fig1)
 fig2, ax2 = plt.subplots(figsize=(6,3))
 ax2.hist(delta, bins=50, color='gray', alpha=0.7)
 ax2.axvline(0, color='red', linestyle='--', label='No difference')
-ax2.set_xlabel('Difference B−A')
+ax2.set_xlabel('Difference (Variant − Control)')
 ax2.set_ylabel('Frequency')
 ax2.legend()
 st.pyplot(fig2)
