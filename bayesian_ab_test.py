@@ -98,7 +98,7 @@ posterior_b = np.random.beta(alpha_b, beta_b, samples)
 
 delta = posterior_b - posterior_a
 lift = (delta / posterior_a) * 100
-prob_b_bter = np.mean(delta > 0)
+prob_b_better = np.mean(delta > 0)
 expected_lift = np.mean(lift)
 ci_low, ci_high = np.percentile(delta, [ci_low_percentile, ci_high_percentile])
 ci_width = ci_high - ci_low
