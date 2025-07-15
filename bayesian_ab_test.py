@@ -13,7 +13,7 @@ if st.session_state.reset:
         if key != "reset":
             del st.session_state[key]
     st.session_state.reset = False
-    st.experimental_rerun()
+    st.rerun()
 
 # Page setup
 st.set_page_config(page_title="Bayesian A/B Test Calculator", layout="centered")
