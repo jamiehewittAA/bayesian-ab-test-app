@@ -150,8 +150,12 @@ if simple_mode:
         st.success("🔒 Result is robust: precise, significant, meaningful.")
     else:
         if no_more_traffic:
-            st.warning("⚠️ Promising but not robust—proceed with caution.")
-            st.caption("Consider limiting exposure, monitoring metrics closely, and planning follow-up tests to verify performance before full rollout.")
+            if decision_prob >= 0.5:
+                st.warning("⚠️ Promising but not robust—proceed with caution.")
+                st.caption("Consider limiting exposure, monitoring metrics closely, and planning follow-up tests to verify performance before full rollout.")
+            else:
+                st.warning("⚠️ B is unlikely to outperform A—consider focusing on Variant A or gathering more data.")
+                st.caption("Based on current data, Variant B underperforms. You might switch traffic back to A or test new variants.")
         else:
             st.warning("🚧 Not yet robust—consider more data.")
             if days_needed:
