@@ -170,7 +170,7 @@ if simple_mode:
         st.markdown(f"📈 **Expected annual gain:** £{annual_gain:,.2f}")
         st.caption("Projected annual gain assuming similar traffic and performance.")
     # ... rest remains unchanged
-        st.markdown(f"💡 **Expected gain:** £{exp_gain:,.2f}"))
+        st.markdown(f"💡 **Expected gain for test sample:** £{exp_gain:,.2f}")
 
 # Posterior distributions
 x = np.linspace(0, max(mean_a, mean_b) * 1.5, 1000)
