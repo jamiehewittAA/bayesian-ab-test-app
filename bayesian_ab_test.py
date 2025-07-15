@@ -3,9 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import beta
 
-# Reset button
+# --- Reset Button Logic ---
+if "reset" not in st.session_state:
+    st.session_state.reset = False
+
 if st.button("🔄 Reset Calculator"):
-    st.session_state.clear()
+    st.session_state.reset = True
+
+if st.session_state.reset:
+    for key in list(st.session_state.keys()):
+        if key != "reset":
+            del st.session_state[key]
+    st.session_state.reset = False
     st.rerun()
 
 # Page setup
@@ -56,7 +65,6 @@ ci_tail = (1 - prob_threshold) / 2 * 100
 ci_low_percentile = ci_tail
 ci_high_percentile = 100 - ci_tail
 
-# Robustness sensitivity slider
 robust_width_target = st.slider(
     f"Required CI width for robustness at {confidence_choice}% confidence",
     min_value=0.005,
@@ -96,10 +104,12 @@ samples = 200_000
 posterior_a = np.random.beta(alpha_a, beta_a, samples)
 posterior_b = np.random.beta(alpha_b, beta_b, samples)
 
+mean_a = np.mean(posterior_a)
+mean_b = np.mean(posterior_b)
 delta = posterior_b - posterior_a
-lift = (delta / posterior_a) * 100
 prob_b_better = np.mean(delta > 0)
-expected_lift = np.mean(lift)
+expected_absolute_lift = mean_b - mean_a
+expected_relative_lift = (expected_absolute_lift / mean_a) * 100
 ci_low, ci_high = np.percentile(delta, [ci_low_percentile, ci_high_percentile])
 ci_width = ci_high - ci_low
 in_rope = np.mean((delta > -practical_effect) & (delta < practical_effect))
@@ -114,40 +124,16 @@ additional_visitors = max(suggested_total_visitors - total_visitors, 0)
 avg_daily_visitors = total_visitors / test_days if test_days else 1
 estimated_days = int(np.ceil(additional_visitors / avg_daily_visitors)) if avg_daily_visitors else None
 
-# --- Robustness Chart ---
-# For the chart, let's create a dynamic visualization of the test's remaining days.
-robust_widths = np.linspace(0.005, 0.03, 50)
-scale_factors = (ci_width / robust_widths) ** 2
-suggested_visitors = total_visitors * scale_factors
-additional_visitors = np.maximum(suggested_visitors - total_visitors, 0)
-avg_daily_visitors = total_visitors / test_days if test_days else 1
-estimated_days = np.ceil(additional_visitors / avg_daily_visitors)
-
-# Chart visualization
-st.header("📉 Estimated Days Remaining vs. Robustness Threshold")
-st.markdown("""
-This chart shows how many more days you might need to run the test depending on how strict you want to be about robustness.
-If the required **credible interval width** for a result to be considered **robust** is stricter (e.g. smaller interval), you will need more days to collect enough data.
-""")
-
-plt.figure(figsize=(8, 4))
-plt.plot(robust_widths * 100, estimated_days, marker="o")
-plt.xlabel("Robustness Threshold (% CI Width)")
-plt.ylabel("Estimated Days Remaining")
-plt.title("Estimated Days Remaining vs Robustness Threshold")
-plt.grid(True)
-st.pyplot(plt)
-
 # --- Result Summary ---
 st.header("📊 Summary of Your A/B Test")
 
 if simple_mode:
+    st.markdown(f"📈 The expected improvement is about **{expected_relative_lift:.2f}%** (relative) or **{expected_absolute_lift:.4f}** (absolute).")
+
     if prob_b_better >= prob_threshold:
         st.success(f"✅ B is likely better than A, with about **{prob_b_better*100:.1f}% certainty**.")
     else:
         st.warning(f"⚠️ We can't be confident B is better than A (only {prob_b_better*100:.1f}% certainty).")
-
-    st.markdown(f"📈 The expected improvement is about **{expected_lift:.2f}%**.")
 
     if in_rope > 0.95:
         st.info("ℹ️ The improvement is probably too small to matter.")
@@ -160,14 +146,39 @@ if simple_mode:
         st.success("🎯 This result looks reliable and trustworthy.")
     else:
         st.warning("🚧 The result isn’t stable yet — more data is needed.")
-        st.markdown(f"📊 You should collect about **{additional_visitors:,} more visitors** (≈ **{estimated_days} more days**) before deciding.")
+        if estimated_days is not None:
+            st.markdown(f"📊 You should collect about **{additional_visitors:,} more visitors** (≈ **{estimated_days} more days**) before deciding.")
+        else:
+            st.markdown(f"📊 You should collect about **{additional_visitors:,} more visitors** before deciding.")
 else:
+    st.write(f"Expected Lift: {expected_relative_lift:.2f}%")
+    st.write(f"Absolute Difference: {expected_absolute_lift:.4f}")
     st.write(f"Probability B > A: {prob_b_better*100:.2f}%")
-    st.write(f"Expected Lift: {expected_lift:.2f}%")
     st.write(f"{confidence_choice}% Credible Interval Width: {ci_width:.4f}")
+    st.caption("The credible interval tells us how confident we are in the estimated difference. A smaller width means greater certainty.")
     st.write(f"ROPE Overlap: {in_rope*100:.1f}%")
     st.write("Statistically Significant:", statistically_significant)
     st.write("Robust:", robust)
+
+if show_robustness_explanation:
+    st.markdown("""
+    #### 🤔 What does 'Robust' mean?
+    A result is considered **robust** only if:
+    - ✅ The credible interval is **narrow enough** (threshold set by you above)
+    - ✅ The result is **statistically significant** (credible interval does not cross 0)
+    - ✅ The effect is **not mostly trivial** (low ROPE overlap)
+
+    This ensures the result is **confident, precise, and meaningful**.
+    """)
+
+if show_decision_mode:
+    st.subheader("🧠 Decision Recommendation")
+    if robust:
+        st.success("✅ You can confidently act on this result — it’s robust, meaningful, and stable.")
+    elif prob_b_better >= prob_threshold and in_rope < 0.5:
+        st.info("🟡 Promising result — consider acting **if business impact is high** or retesting for confirmation.")
+    else:
+        st.warning("🚫 Don’t act yet — not enough certainty, precision, or practical impact.")
 
 # --- Posterior Distributions ---
 st.header("📈 Posterior Distributions")
@@ -183,8 +194,6 @@ ax1.set_xlabel("Estimated Conversion Rate")
 ax1.set_ylabel("Density")
 ax1.set_title("Posterior Distributions for A and B")
 ax1.legend()
-ax1.set_xticks([i / 100 for i in range(0, 21, 5)])
-ax1.set_xticklabels([f"{i}%" for i in range(0, 21, 5)])
 st.pyplot(fig1)
 
 # --- Delta Histogram ---
@@ -199,5 +208,28 @@ ax2.set_ylabel("Frequency")
 ax2.set_title("Posterior Distribution of the Difference")
 ax2.legend()
 st.pyplot(fig2)
+
+# --- Chart: Days Remaining vs Robustness Threshold ---
+st.subheader("📅 Estimated Days Remaining vs. Robustness Threshold")
+st.markdown("""
+This chart shows how the **number of days needed to reach a robust result** depends on how strict your robustness settings are.
+- Tighter robustness (e.g., 0.5% CI width) takes longer.
+- More lenient thresholds lead to quicker decisions.
+
+Use it to understand the trade-off between **speed and certainty**.
+""")
+robust_widths = np.linspace(0.005, 0.03, 50)
+scale_factors = (ci_width / robust_widths) ** 2
+suggested_visitors = total_visitors * scale_factors
+extra_visitors = np.maximum(suggested_visitors - total_visitors, 0)
+est_days = np.ceil(extra_visitors / avg_daily_visitors)
+
+fig3, ax3 = plt.subplots(figsize=(8, 4))
+ax3.plot(robust_widths * 100, est_days, marker='o')
+ax3.set_xlabel("Robustness Threshold (CI Width %)")
+ax3.set_ylabel("Estimated Days Remaining")
+ax3.set_title("How Robustness Settings Affect Test Duration")
+ax3.grid(True)
+st.pyplot(fig3)
 
 st.caption("Built for CRO professionals. 100% Bayesian. No jargon. Just insights. 🚀")
