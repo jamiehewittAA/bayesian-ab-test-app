@@ -179,6 +179,22 @@ else:
     st.write(f"- **Statistically significant**: {statsig}")
     st.write(f"- **Robust**: {robust}")
 st.markdown("---")
+
+# ⏳ Days Remaining vs Robustness Threshold
+if show_decision_mode:
+    st.subheader("Days Remaining vs Robustness Threshold")
+    robust_widths = np.linspace(0.005, 0.03, 50)
+    scale_factors = (ci_width / robust_widths) ** 2
+    suggested_total = total_vis * scale_factors
+    extra_visitors = np.maximum(suggested_total - total_vis, 0)
+    days_remaining = np.ceil(extra_visitors / avg_vis_day)
+    fig3, ax3 = plt.subplots(figsize=(6,3))
+    ax3.plot(robust_widths * 100, days_remaining, marker='o')
+    ax3.set_xlabel("Robustness Threshold (% CI width)")
+    ax3.set_ylabel("Estimated Days Remaining")
+    ax3.set_title("Estimated Test Duration vs Robustness")
+    st.pyplot(fig3)
+
 # Posterior distributions
 x = np.linspace(0, max(mean_a, mean_b)*1.5, 1000)
 fig1, ax1 = plt.subplots(figsize=(6,3))
