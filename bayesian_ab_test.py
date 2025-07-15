@@ -14,7 +14,7 @@ No jargon—just straightforward insights.
 """)
 st.markdown("---")
 
-# Mode toggles and business value
+# Mode toggles
 col1, col2 = st.columns(2)
 with col1:
     simple_mode = st.checkbox("Show plain-English explanations", value=True)
@@ -24,9 +24,9 @@ with col2:
     show_decision_mode = st.checkbox("Show Decision Guidance", value=True)
 st.markdown("---")
 
+# Optional business value
 conversion_value = st.number_input(
-    "Optional: Value per conversion (e.g. £10)",
-    min_value=0.0, value=0.0, step=0.1,
+    "Optional: Value per conversion (e.g. £10)", min_value=0.0, value=0.0, step=0.1,
     help="Enter how much each conversion is worth to estimate monetary impact."
 )
 st.markdown("---")
@@ -96,7 +96,7 @@ test_days = st.number_input("Days test has been running", min_value=1, value=7,
 )
 st.markdown("---")
 
-# ——— Perform Bayesian Calculations ———
+# — Perform Bayesian Calculations —
 alpha_a = alpha_prior + conversions_a
 beta_a  = beta_prior + visitors_a - conversions_a
 alpha_b = alpha_prior + conversions_b
@@ -133,9 +133,8 @@ if conversion_value > 0:
     monthly_gain = abs_lift * conversion_value * visitors_per_month
     annual_gain = monthly_gain * 12
 
-# ——— Results Summary & Visualization ———
+# — Results Summary —
 st.header("📊 Results Summary")
-# Summary outputs
 if simple_mode:
     st.markdown(f"**Expected lift:** {rel_lift:.2f}%")
     st.markdown(f"**Chance Variant > Control:** {decision_prob*100:.1f}%")
@@ -168,21 +167,44 @@ if simple_mode:
             if days_needed:
                 st.markdown(f"🔍 Collect ~{extra_vis:,} more visitors (~{days_needed} days) for robust results.")
 else:
-    # Detailed statistical view
     st.subheader("🧮 Detailed Metrics")
     st.write(f"- **Expected lift**: {rel_lift:.2f}%")
     st.write(f"- **Absolute lift**: {abs_lift:.4f}")
     st.write(f"- **Probability Variant > Control**: {decision_prob*100:.2f}%")
-    st.write(f"- **{confidence_choice}% Credible Interval**: [{ci_low:.4f}, {ci_high:.4f}] (width {ci_width:.4f})")
+    st.write(f"- **{confidence_choice}% CI**: [{ci_low:.4f}, {ci_high:.4f}] (width {ci_width:.4f})")
     st.caption("A narrower CI indicates greater precision.")
     st.write(f"- **ROPE overlap**: {rope_overlap*100:.1f}%")
     st.write(f"- **Statistically significant**: {statsig}")
     st.write(f"- **Robust**: {robust}")
-st.markdown("---")
 
-# ⏳ Days Remaining vs Robustness Threshold
+# Posterior distributions
+st.markdown("---")
+st.header("📈 Posterior Distributions")
+max_rate = max(mean_a, mean_b)
+x = np.linspace(0, max_rate*1.5, 1000)
+fig1, ax1 = plt.subplots(figsize=(6,3))
+ax1.plot(x, beta.pdf(x, alpha_a, beta_a), label='Control')
+ax1.plot(x, beta.pdf(x, alpha_b, beta_b), label='Variant')
+ax1.set_xlabel('Conversion rate (%)')
+xticks = np.linspace(0, max_rate*1.5, 6)
+ax1.set_xticks(xticks)
+ax1.set_xticklabels([f"{tick*100:.2f}%" for tick in xticks])
+ax1.legend()
+st.pyplot(fig1)
+
+# Difference histogram
+st.subheader("📉 Difference (Variant − Control)")
+fig2, ax2 = plt.subplots(figsize=(6,3))
+ax2.hist(delta, bins=50, color='gray', alpha=0.7)
+ax2.axvline(0, color='red', linestyle='--', label='No difference')
+ax2.set_xlabel('Difference (Variant − Control)')
+ax2.set_ylabel('Frequency')
+ax2.legend()
+st.pyplot(fig2)
+
+# ⏳ Estimated Days Remaining vs Robustness Threshold
 if show_decision_mode:
-    st.subheader("Days Remaining vs Robustness Threshold")
+    st.subheader("⏳ Days Remaining vs Robustness Threshold")
     robust_widths = np.linspace(0.005, 0.03, 50)
     scale_factors = (ci_width / robust_widths) ** 2
     suggested_total = total_vis * scale_factors
@@ -194,22 +216,3 @@ if show_decision_mode:
     ax3.set_ylabel("Estimated Days Remaining")
     ax3.set_title("Estimated Test Duration vs Robustness")
     st.pyplot(fig3)
-
-# Posterior distributions
-x = np.linspace(0, max(mean_a, mean_b)*1.5, 1000)
-fig1, ax1 = plt.subplots(figsize=(6,3))
-ax1.plot(x, beta.pdf(x, alpha_a, beta_a), label='Control')
-ax1.plot(x, beta.pdf(x, alpha_b, beta_b), label='Variant')
-ax1.set_xlabel('Conversion rate')
-ax1.set_ylabel('Density')
-ax1.legend()
-st.pyplot(fig1)
-
-# Difference histogram
-fig2, ax2 = plt.subplots(figsize=(6,3))
-ax2.hist(delta, bins=50, color='gray', alpha=0.7)
-ax2.axvline(0, color='red', linestyle='--', label='No difference')
-ax2.set_xlabel('Difference (Variant − Control)')
-ax2.set_ylabel('Frequency')
-ax2.legend()
-st.pyplot(fig2)
