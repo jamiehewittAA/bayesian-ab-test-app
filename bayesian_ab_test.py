@@ -54,19 +54,19 @@ ci_tail = (1 - prob_threshold) / 2 * 100
 ci_low_percentile = ci_tail
 ci_high_percentile = 100 - ci_tail
 
-# --- 4. ROPE ---
+# --- 4. ROPE Slider ---
 st.header("4️⃣ Minimum Meaningful Difference (ROPE)")
-practical_effect = st.slider(
+practical_effect_display = st.slider(
     "Ignore differences smaller than this (0%–5%)",
     min_value=0.0,
-    max_value=0.05,
-    value=0.005,
-    step=0.001,
-    format="%.1f%%",
+    max_value=5.0,
+    value=0.5,
+    step=0.1,
     help="ROPE = Region of Practical Equivalence: differences smaller than this are considered too small to matter."
 )
+practical_effect = practical_effect_display / 100.0
 
-# --- 5. Daily Traffic for Estimating Test Duration ---
+# --- 5. Daily Traffic ---
 daily_traffic = st.number_input("Daily visitors to A + B", min_value=1, value=2000, help="Used to estimate days left if your result isn’t robust yet.")
 
 # --- Bayesian Inference ---
@@ -89,7 +89,7 @@ in_rope = np.mean((delta > -practical_effect) & (delta < practical_effect))
 statistically_significant = ci_low > 0 or ci_high < 0
 robust = ci_width < 0.01 and statistically_significant and in_rope < 0.95
 
-# --- Data Needed Estimate ---
+# --- Estimate Additional Visitors Needed ---
 scale_factor = (ci_width / 0.01) ** 2 if ci_width > 0 else 1
 suggested_total_visitors = int((visitors_a + visitors_b) * scale_factor)
 additional_visitors = max(suggested_total_visitors - (visitors_a + visitors_b), 0)
@@ -128,8 +128,11 @@ else:
 
 # --- Posterior Distributions ---
 st.header("📈 Posterior Distributions")
+mean_rate_a = conversions_a / visitors_a if visitors_a else 0
+mean_rate_b = conversions_b / visitors_b if visitors_b else 0
+max_rate = max(mean_rate_a, mean_rate_b)
+x = np.linspace(0, max_rate * 1.5, 1000)
 
-x = np.linspace(0, max(posterior_a.max(), posterior_b.max()) * 1.1, 1000)
 fig1, ax1 = plt.subplots(figsize=(8, 4))
 ax1.plot(x, beta.pdf(x, alpha_a, beta_a), label="A", linewidth=2)
 ax1.plot(x, beta.pdf(x, alpha_b, beta_b), label="B", linewidth=2)
@@ -137,6 +140,8 @@ ax1.set_xlabel("Estimated Conversion Rate")
 ax1.set_ylabel("Density")
 ax1.set_title("Posterior Distributions for A and B")
 ax1.legend()
+ax1.set_xticks([i / 100 for i in range(0, 21, 5)])
+ax1.set_xticklabels([f"{i}%" for i in range(0, 21, 5)])
 st.pyplot(fig1)
 
 # --- Delta Histogram ---
