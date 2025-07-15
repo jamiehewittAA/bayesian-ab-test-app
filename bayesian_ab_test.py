@@ -19,6 +19,8 @@ It gives you practical insights, even if you don’t have a statistics backgroun
 
 # Toggle for plain-English or stats mode
 simple_mode = st.toggle("🧠 Show plain-English explanations", value=True)
+show_robustness_explanation = st.toggle("📘 Explain Robustness Criteria", value=False)
+show_decision_mode = st.toggle("🎯 Show Decision Recommendation Mode", value=True)
 
 # --- 1. Input Data ---
 st.header("1️⃣ Enter Your A/B Test Data")
@@ -54,6 +56,16 @@ ci_tail = (1 - prob_threshold) / 2 * 100
 ci_low_percentile = ci_tail
 ci_high_percentile = 100 - ci_tail
 
+# Robustness sensitivity slider
+robust_width_target = st.slider(
+    f"Required CI width for robustness at {confidence_choice}% confidence",
+    min_value=0.005,
+    max_value=0.03,
+    value={95: 0.01, 90: 0.012, 80: 0.015}.get(confidence_choice, 0.01),
+    step=0.001,
+    help="Lower = more strict. Adjust how narrow the credible interval must be to consider a result robust."
+)
+
 # --- 4. ROPE Slider ---
 st.header("4️⃣ Minimum Meaningful Difference (ROPE)")
 practical_effect_display = st.slider(
@@ -66,8 +78,13 @@ practical_effect_display = st.slider(
 )
 practical_effect = practical_effect_display / 100.0
 
-# --- 5. Daily Traffic ---
-daily_traffic = st.number_input("Daily visitors to A + B", min_value=1, value=2000, help="Used to estimate days left if your result isn’t robust yet.")
+# --- 5. Test Duration ---
+test_days = st.number_input(
+    "Number of days the test has been running",
+    min_value=1,
+    value=7,
+    help="Used to estimate how many more days you'd need to continue the test if results are not yet robust."
+)
 
 # --- Bayesian Inference ---
 alpha_a = alpha_prior + conversions_a
@@ -81,19 +98,45 @@ posterior_b = np.random.beta(alpha_b, beta_b, samples)
 
 delta = posterior_b - posterior_a
 lift = (delta / posterior_a) * 100
-prob_b_better = np.mean(delta > 0)
+prob_b_bter = np.mean(delta > 0)
 expected_lift = np.mean(lift)
 ci_low, ci_high = np.percentile(delta, [ci_low_percentile, ci_high_percentile])
 ci_width = ci_high - ci_low
 in_rope = np.mean((delta > -practical_effect) & (delta < practical_effect))
 statistically_significant = ci_low > 0 or ci_high < 0
-robust = ci_width < 0.01 and statistically_significant and in_rope < 0.95
+robust = ci_width < robust_width_target and statistically_significant and in_rope < 0.95
 
 # --- Estimate Additional Visitors Needed ---
-scale_factor = (ci_width / 0.01) ** 2 if ci_width > 0 else 1
-suggested_total_visitors = int((visitors_a + visitors_b) * scale_factor)
-additional_visitors = max(suggested_total_visitors - (visitors_a + visitors_b), 0)
-estimated_days = int(np.ceil(additional_visitors / daily_traffic)) if daily_traffic else None
+total_visitors = visitors_a + visitors_b
+scale_factor = (ci_width / robust_width_target) ** 2 if ci_width > 0 else 1
+suggested_total_visitors = int(total_visitors * scale_factor)
+additional_visitors = max(suggested_total_visitors - total_visitors, 0)
+avg_daily_visitors = total_visitors / test_days if test_days else 1
+estimated_days = int(np.ceil(additional_visitors / avg_daily_visitors)) if avg_daily_visitors else None
+
+# --- Robustness Chart ---
+# For the chart, let's create a dynamic visualization of the test's remaining days.
+robust_widths = np.linspace(0.005, 0.03, 50)
+scale_factors = (ci_width / robust_widths) ** 2
+suggested_visitors = total_visitors * scale_factors
+additional_visitors = np.maximum(suggested_visitors - total_visitors, 0)
+avg_daily_visitors = total_visitors / test_days if test_days else 1
+estimated_days = np.ceil(additional_visitors / avg_daily_visitors)
+
+# Chart visualization
+st.header("📉 Estimated Days Remaining vs. Robustness Threshold")
+st.markdown("""
+This chart shows how many more days you might need to run the test depending on how strict you want to be about robustness.
+If the required **credible interval width** for a result to be considered **robust** is stricter (e.g. smaller interval), you will need more days to collect enough data.
+""")
+
+plt.figure(figsize=(8, 4))
+plt.plot(robust_widths * 100, estimated_days, marker="o")
+plt.xlabel("Robustness Threshold (% CI Width)")
+plt.ylabel("Estimated Days Remaining")
+plt.title("Estimated Days Remaining vs Robustness Threshold")
+plt.grid(True)
+st.pyplot(plt)
 
 # --- Result Summary ---
 st.header("📊 Summary of Your A/B Test")
