@@ -47,6 +47,11 @@ with col3:
 with col4:
     visitors_b = st.number_input("Visitors (Variant)", min_value=1, value=1000)
     conversions_b = st.number_input("Conversions (Variant)", min_value=0, value=70)
+
+# Display current conversion rates
+cvr_control = (conversions_a / visitors_a) * 100 if visitors_a > 0 else 0
+cvr_variant = (conversions_b / visitors_b) * 100 if visitors_b > 0 else 0
+st.markdown(f"**Control CVR:** {cvr_control:.2f}%  |  **Variant CVR:** {cvr_variant:.2f}%")
 st.markdown("---")
 
 # 2. Prior Beliefs
