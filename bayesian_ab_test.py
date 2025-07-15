@@ -196,6 +196,9 @@ if show_decision_mode:
     else:
         st.warning("🚫 Recommendation: Do not implement Variant B yet — evidence is insufficient.")
 
+# Add spacing to separate from decision guidance
+st.write("")
+st.write("")
 # Posterior distributions
 x = np.linspace(0, max(mean_a, mean_b) * 1.5, 1000)
 fig1, ax1 = plt.subplots(figsize=(6, 3))
