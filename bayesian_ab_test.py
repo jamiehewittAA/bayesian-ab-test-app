@@ -143,13 +143,29 @@ if simple_mode:
         st.caption("Projected monthly gain based on test traffic.")
         st.markdown(f"📈 **Expected annual gain:** £{annual_gain:,.2f}")
         st.caption("Projected annual gain based on test traffic.")
-    # Determine and display which variant is better or if inconclusive
+    # Decision logic based on probability
     if decision_prob >= prob_threshold:
         st.success("✅ Variant likely outperforms Control.")
     elif (1 - decision_prob) >= prob_threshold:
         st.error("⛔ Control likely outperforms Variant — do NOT implement Variant.")
         st.caption("High confidence that the control is better. Revert traffic to Control or test new ideas.")
     else:
+        st.warning("⚠️ Insufficient confidence that Variant outperforms Control.")
+    # Robustness check
+    if robust:
+        st.success("🔒 Result is robust: precise, significant, meaningful.")
+    else:
+        if no_more_traffic:
+            if decision_prob >= 0.5:
+                st.warning("⚠️ Promising but not robust—proceed with caution.")
+                st.caption("Consider limiting exposure, monitoring metrics closely, and planning follow-up tests to verify performance before full rollout.")
+            else:
+                st.warning("⚠️ Variant underperforms Control—consider focusing on Control or gathering more data.")
+                st.caption("Based on current data, the variant is less effective than the control. Consider reverting or testing new variants.")
+        else:
+            st.warning("🚧 Not yet robust—consider collecting more data.")
+            if days_needed:
+                st.markdown(f"🔍 Collect ~{extra_vis:,} more visitors (~{days_needed} days) for robust results.")
         st.warning("⚠️ Insufficient confidence that Variant outperforms Control.")
     # Robustness check:
         st.success("🔒 Result is robust: precise, significant, meaningful.")
