@@ -3,23 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import beta
 
-# --- Reset Button Logic ---
-if "reset" not in st.session_state:
-    st.session_state.reset = False
-if st.button("🔄 Reset Calculator"):
-    st.session_state.reset = True
-if st.session_state.reset:
-    for key in list(st.session_state.keys()):
-        if key != "reset":
-            del st.session_state[key]
-    st.session_state.reset = False
-    st.rerun()
-
 # Page setup
 st.set_page_config(page_title="Bayesian A/B Test Calculator", layout="centered")
 
 # Title and description
-st.title("🧪 Bayesian CRO Test Calculator")
+st.title("🧪 Easy Bayesian A/B Test Calculator")
 st.markdown("""
 Use **Bayesian analysis** to make clear, data-driven decisions in A/B testing.  
 No jargon—just straightforward insights.
@@ -159,6 +147,7 @@ if conversion_value > 0:
 
 # Summary outputs
 st.header("📊 Results Summary")
+
 if simple_mode:
     st.markdown(f"**Expected lift:** {rel_lift:.2f}% (or {abs_lift:.4f} points)")
     st.markdown(f"**Probability B > A:** {decision_prob*100:.1f}%")
@@ -169,8 +158,43 @@ if simple_mode:
         st.caption("Projected monthly gain assuming similar daily traffic.")
         st.markdown(f"📈 **Expected annual gain:** £{annual_gain:,.2f}")
         st.caption("Projected annual gain assuming similar traffic and performance.")
-    # ... rest remains unchanged
-        st.markdown(f"💡 **Expected gain for test sample:** £{exp_gain:,.2f}")
+    if decision_prob >= prob_threshold:
+        st.success("🎉 B is likely better than A!")
+    else:
+        st.warning("⚠️ Not enough confidence that B is better.")
+    if robust:
+        st.success("🔒 Result is robust: precise, significant, and meaningful.")
+    else:
+        if no_more_traffic:
+            st.warning("⚠️ Promising but not robust—use caution if acting now.")
+        else:
+            st.warning("🚧 Result not yet robust—consider collecting more data.")
+            if days_needed:
+                st.markdown(f"🔍 Collect ~{extra_vis:,} more visitors (~{days_needed} days) for robust results.")
+
+else:
+    st.subheader("Detailed Statistics")
+    st.write(f"- Expected lift: {rel_lift:.2f}%")
+    st.write(f"- Absolute lift: {abs_lift:.4f}")
+    st.write(f"- Probability B > A: {decision_prob*100:.2f}%")
+    st.write(f"- {confidence_choice}% credible interval: [{ci_low:.4f}, {ci_high:.4f}] (width {ci_width:.4f})")
+    st.caption("A narrower interval indicates more precise estimates.")
+    st.write(f"- ROPE overlap: {rope_overlap*100:.1f}%")
+    st.write(f"- Statistically significant: {statsig}")
+    st.write(f"- Robust: {robust}")
+
+# Additional Explanations
+if show_robustness_explanation:
+    st.info("**Robust** means the result is statistically significant, the credible interval is narrow enough, and the effect size is practically meaningful.")
+
+if show_decision_mode:
+    st.subheader("🧠 Decision Guidance")
+    if robust:
+        st.success("✅ Recommendation: Implement Variant B — results are reliable and meaningful.")
+    elif decision_prob >= prob_threshold and rope_overlap < 0.5:
+        st.info("🟡 Consider implementing Variant B if the potential gains justify the risk.")
+    else:
+        st.warning("🚫 Recommendation: Do not implement Variant B yet — evidence is insufficient.")
 
 # Posterior distributions
 x = np.linspace(0, max(mean_a, mean_b) * 1.5, 1000)
