@@ -215,29 +215,32 @@ st.pyplot(fig1)
 # Difference histogram
 st.subheader("📉 Difference (Variant − Control)")
 st.markdown("""
-This chart shows the range of possible differences in conversion rate between Variant and Control.
-Values to the **right of zero** mean the Variant converted more; values to the **left** mean the Control converted more.
-The height represents how frequently each difference occurred in the posterior distribution.
+This chart shows how much the conversion rate is likely to change when you move from Control to Variant.  
+- **Right of zero**: Variant outperforms Control.
+- **Left of zero**: Control outperforms Variant.
+The taller the bar, the more likely that difference is.
 """)
 fig2, ax2 = plt.subplots(figsize=(6,3))
-# Shade positive vs negative areas for clarity
-ax2.hist(delta, bins=50, color='lightgray', alpha=1)
-# Highlight negative and positive
-ax2.hist(delta[delta<0], bins=50, color='salmon', alpha=0.7)
-ax2.hist(delta[delta>0], bins=50, color='lightgreen', alpha=0.7)
-ax2.axvline(0, color='black', linestyle='--')
-# Annotate probability
-prob_pos = decision_prob * 100
-ax2.text(0.01, ax2.get_ylim()[1]*0.9, f"P(Variant > Control) = {prob_pos:.1f}%", color='green')
-prob_neg = (1-decision_prob)*100
-ax2.text(-0.01, ax2.get_ylim()[1]*0.9, f"P(Control > Variant) = {prob_neg:.1f}%", color='salmon')
+# Plot full distribution outline
+counts, bins, patches = ax2.hist(delta, bins=50, color='lightgray', alpha=1)
+# Highlight negative and positive regions
+for patch, edge in zip(patches, bins[:-1]):
+    if edge < 0:
+        patch.set_facecolor('salmon')
+    else:
+        patch.set_facecolor('lightgreen')
+# Vertical line at zero
+ax2.axvline(0, color='black', linestyle='--', linewidth=1)
+# Simplified legend
+ax2.legend(["Control better", "Variant better"], loc='upper left')
+# Clean up labels and layout
 ax2.set_xlabel('Conversion rate difference (Variant − Control)')
 ax2.set_ylabel('Frequency')
-ax2.set_title('Posterior Distribution of the Difference')
-ax2.legend(["All", "Control better", "Variant better"], loc='upper left')
+ax2.set_title('Posterior Distribution of the Difference', pad=15)
+fig2.tight_layout()
 st.pyplot(fig2)
 
-# ⏳ Estimated Days Remaining vs Robustness Threshold
+# ⏳ Estimated Days Remaining vs Robustness Threshold vs Robustness Threshold
 if show_decision_mode:
     st.subheader("⏳ Days Remaining vs Robustness Threshold")
     robust_widths = np.linspace(0.005, 0.03, 50)
