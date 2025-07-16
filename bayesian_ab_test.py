@@ -158,32 +158,35 @@ if conversion_value>0:
 else:
     monthly_gain=annual_gain=None
 
-# Financial modelling scenarios
+# Financial modelling scenarios based on lift CI
 if conversion_value>0:
-    abs_low_lift=(variant_ci_low/100)-(control_ci_high/100)
-    abs_high_lift=(variant_ci_high/100)-(control_ci_low/100)
-    abs_avg_lift=abs_lift
-    monthly_low_gain=abs_low_lift*conversion_value*visitors_per_month
-    monthly_avg_gain=abs_avg_lift*conversion_value*visitors_per_month
-    monthly_high_gain=abs_high_lift*conversion_value*visitors_per_month
-    annual_low_gain=monthly_low_gain*12
-    annual_avg_gain=monthly_avg_gain*12
-    annual_high_gain=monthly_high_gain*12
+    # Use lift credible interval directly for scenarios
+    abs_low_lift = ci_low            # lower bound of lift (decimal)
+    abs_avg_lift = abs_lift          # posterior mean lift (decimal)
+    abs_high_lift = ci_high          # upper bound of lift (decimal)
+    # Monthly and annual gains for scenarios
+    monthly_low_gain = abs_low_lift * conversion_value * visitors_per_month
+    monthly_avg_gain = abs_avg_lift * conversion_value * visitors_per_month
+    monthly_high_gain = abs_high_lift * conversion_value * visitors_per_month
+    annual_low_gain  = monthly_low_gain * 12
+    annual_avg_gain  = monthly_avg_gain * 12
+    annual_high_gain = monthly_high_gain * 12
+
     st.header("💼 Financial Projections Scenarios")
     st.markdown(
         """
-        These figures estimate monthly and annual revenue impact under different uplift scenarios:
+        Estimate potential revenue impact per month and year under different lift scenarios:
 
-        - **Lowest uplift**: minimal increase from CI bounds
-        - **Average uplift**: expected increase
-        - **Highest uplift**: maximal increase from CI bounds
+        - **Worst-case lift** (lower CI bound): the minimal realistic uplift.
+        - **Expected lift** (posterior mean): the most likely uplift.
+        - **Best-case lift** (upper CI bound): the maximal realistic uplift.
         """
     )
-    st.markdown(f"**Lowest uplift ({abs_low_lift*100:.2f}%):** £{monthly_low_gain:,.2f}/month, £{annual_low_gain:,.2f}/year")
-    st.markdown(f"**Average uplift ({abs_avg_lift*100:.2f}%):** £{monthly_avg_gain:,.2f}/month, £{annual_avg_gain:,.2f}/year")
-    st.markdown(f"**Highest uplift ({abs_high_lift*100:.2f}%):** £{monthly_high_gain:,.2f}/month, £{annual_high_gain:,.2f}/year")
+    st.markdown(f"**Worst-case lift ({abs_low_lift*100:.2f}%):** £{monthly_low_gain:,.2f}/month, £{annual_low_gain:,.2f}/year")
+    st.markdown(f"**Expected lift ({abs_avg_lift*100:.2f}%):** £{monthly_avg_gain:,.2f}/month, £{annual_avg_gain:,.2f}/year")
+    st.markdown(f"**Best-case lift ({abs_high_lift*100:.2f}%):** £{monthly_high_gain:,.2f}/month, £{annual_high_gain:,.2f}/year")
 else:
-    st.info("💡 Enter a 'Value per conversion' to see financial projections scenarios.")
+    st.info("💡 Enter a 'Value per conversion' to see financial projections scenarios.")("💡 Enter a 'Value per conversion' to see financial projections scenarios.")
 
 st.markdown("---")
 # Results Summary Metrics
