@@ -240,9 +240,17 @@ ax2.set_title('Posterior Distribution of the Difference', pad=15)
 fig2.tight_layout()
 st.pyplot(fig2)
 
-# ⏳ Estimated Days Remaining vs Robustness Threshold vs Robustness Threshold
+# ⏳ Days Remaining vs Robustness Threshold
 if show_decision_mode:
-    st.subheader("⏳ Days Remaining vs Robustness Threshold")
+    st.subheader("⏳ How Many More Days to Reach Your Precision Goal?")
+    st.markdown(
+        """
+        This chart shows **how many more days** you'll need on your current traffic levels to achieve the desired **credible interval (CI) width** you set above.
+        - The **blue line** plots days remaining vs. different CI width thresholds.
+        - The **red dashed line** marks the CI width you selected.
+        - The **red dot** shows your current position (CI width × days remaining).
+        """
+    )
     robust_widths = np.linspace(0.005, 0.03, 50)
     scale_factors = (ci_width / robust_widths) ** 2
     suggested_total = total_vis * scale_factors
@@ -251,17 +259,18 @@ if show_decision_mode:
     
     fig3, ax3 = plt.subplots(figsize=(6,3))
     ax3.plot(robust_widths * 100, days_remaining, marker='o', label='Days Remaining')
-    # Mark the user-selected CI width threshold
     current_x = robust_width_target * 100
-    # Find nearest days remaining for current threshold
     idx = np.argmin(np.abs(robust_widths - robust_width_target))
     current_y = days_remaining[idx]
-    ax3.axvline(current_x, color='red', linestyle='--', label='Your CI Width Threshold')
-    ax3.scatter([current_x], [current_y], color='red')
-    ax3.text(current_x, current_y, f" {current_x:.2f}% CI, {int(current_y)} days", va='bottom', ha='left')
+    ax3.axvline(current_x, color='red', linestyle='--', linewidth=1.5, label='Your CI Width')
+    ax3.scatter([current_x], [current_y], color='red', zorder=5)
+    ax3.text(current_x + 0.05, current_y, f"{current_x:.1f}% CI → {int(current_y)} days", va='center')
     
-    ax3.set_xlabel("Robustness Threshold (% CI width)")
-    ax3.set_ylabel("Estimated Days Remaining")
-    ax3.set_title("Estimated Test Duration vs Robustness")
+    ax3.set_xlabel("CI Width Threshold (%)")
+    ax3.set_ylabel("Days Remaining")
+    ax3.set_xlim(robust_widths.min()*100, robust_widths.max()*100)
+    ax3.set_ylim(0, days_remaining.max()*1.1)
+    ax3.set_title("Time Needed to Reach Precision")
     ax3.legend()
+    fig3.tight_layout()
     st.pyplot(fig3)
