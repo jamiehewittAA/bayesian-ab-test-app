@@ -184,9 +184,6 @@ st.markdown(f"**Highest uplift ({abs_high_lift*100:.2f}%):** £{monthly_high_gai
 
 # Continue with visualizations
 st.markdown("---")
-("Projected monthly gain based on test traffic.")
-        st.markdown(f"📈 **Expected annual gain:** £{annual_gain:,.2f}")
-        st.caption("Projected annual gain based on test traffic.")
     # Decision logic
     if decision_prob >= prob_threshold:
         st.success("✅ Variant likely outperforms Control.")
