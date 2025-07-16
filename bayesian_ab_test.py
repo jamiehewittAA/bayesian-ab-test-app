@@ -217,20 +217,18 @@ if simple_mode:
 
 # What to do next?
 st.subheader("🛠️ What to do next?")
-# Compute suggested holdback percentage based on data needs
+# Compute suggested holdback and monitoring period optimized for efficiency
 data_ratio = days_needed/(days_needed+test_days) if (days_needed and test_days) else 0
-suggested_holdback = int(data_ratio*100)
+# Minimal holdback of 5%, capped at 10% for faster ramp
+holdback_pct = min(max(int(data_ratio*100), 5), 10)
+variant_pct = 100 - holdback_pct
+# Short monitoring: at most the smaller of 3 days or days_needed
+monitor_days = min(filter(lambda x: x is not None, [days_needed, test_days, 3])) if (days_needed and test_days) else 3
 if robust:
-    st.info("🚀 You have robust results—roll out Variant to 100% of traffic using your CRO tool.")
+    st.info("🚀 Results are robust—roll out Variant to 100% of traffic immediately.")
 else:
-    # Suggest high-exposure ramp with small control holdback for short monitoring period
-    # Calculate minimal holdback percent (at least 5%, up to suggested_holdback)
-    holdback_min = min(max(suggested_holdback, 5), 20)
-    variant_pct = 100 - holdback_min
-    # Recommend monitoring period: shorter of days_needed or test_days
-    monitor_days = days_needed if (days_needed and days_needed < test_days) else test_days
     st.info(
-        f"⚙️ Practical approach: ramp Variant to {variant_pct}% of traffic and hold back {holdback_min}% as Control for the next {monitor_days} days to quickly validate uplift while maximizing exposure."
+        f"⚙️ To move fast: ramp Variant to {variant_pct}% of traffic and hold back {holdback_pct}% for Control, monitoring performance for {monitor_days} days before full rollout."
     )
     if not no_more_traffic and days_needed:
         st.info(f"🔍 Alternatively, collect ~{extra_vis:,} more visitors (~{days_needed} days) to reach desired precision.")
