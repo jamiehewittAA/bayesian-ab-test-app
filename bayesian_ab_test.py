@@ -52,7 +52,7 @@ with col4:
 cvr_control = (conversions_a / visitors_a) * 100 if visitors_a > 0 else 0
 cvr_variant = (conversions_b / visitors_b) * 100 if visitors_b > 0 else 0
 st.markdown(f"**Control CVR:** {cvr_control:.2f}%  |  **Variant CVR:** {cvr_variant:.2f}%")
-st.markdown("---")(f"**Control CVR:** {cvr_control:.2f}%  |  **Variant CVR:** {cvr_variant:.2f}%")
+
 st.markdown("---")
 
 # 2. Prior Beliefs
