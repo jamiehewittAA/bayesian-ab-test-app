@@ -115,8 +115,11 @@ st.markdown("---")
 
 # 4. Practical Impact (ROPE)
 st.header("4. Practical Impact (ROPE)")
-practical_display = st.slider("Ignore changes smaller than (%)",0.0,5.0,0.5,0.1,help="ROPE = range where differences are too small to matter.")
-practical_effect = practical_display / 100.0
+practical_display = st.slider(
+    "ROPE: Ignore changes smaller than (%)", 0.0, 5.0, 0.5, 0.1,
+    help="Set the Region of Practical Equivalence (ROPE) in percentage points: differences within ±this range are treated as negligible."
+)
+practical_effect = practical_display / 100.0 / 100.0
 st.markdown("---")
 
 # 5. Test Duration
