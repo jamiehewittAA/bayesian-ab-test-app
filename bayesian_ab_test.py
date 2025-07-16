@@ -209,11 +209,18 @@ else:
 if simple_mode:
     st.subheader("🔍 What does this mean?")
     if robust:
-        st.markdown("Result is robust: confident in direction and magnitude.")
-    elif decision_prob>=prob_threshold:
-        st.markdown("Variant likely better, but effect size is uncertain.")
+        st.markdown("Your result is robust: you can be confident in both the direction and size of the effect.")
+    elif decision_prob >= prob_threshold:
+        # Variant likely better but CI may include negative effects
+        if ci_low < 0:
+            st.markdown(
+                "Variant likely outperforms Control, but the credible interval still includes negative values, "
+                "so the true effect could be small or even negative."
+            )
+        else:
+            st.markdown("Variant likely outperforms Control, and even the lower bound of the credible interval is positive—true effect should be beneficial.")
     else:
-        st.markdown("No clear benefit of Variant—stick with Control or test more.")
+        st.markdown("No clear benefit of Variant—there’s a substantial chance the Variant could underperform Control.")
 
 # What to do next?
 st.subheader("🛠️ What to do next?")
