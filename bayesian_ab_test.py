@@ -295,3 +295,55 @@ if show_decision_mode:
     fig3.tight_layout()
     st.pyplot(fig3)
     st.caption(f"You have run {test_days} days; the red dot shows extra days needed.")
+
+# 📈 Posterior Distributions of Conversion Rates
+st.subheader("Posterior Distributions of Conversion Rates")
+st.markdown("""
+This plot shows the distribution of plausible conversion rates (CVR) for Control and Variant:
+- X-axis: Conversion rate (%)
+- Y-axis: Probability density
+- Peaks indicate the most likely CVR values.
+""")
+x = np.linspace(0, max(mean_a, mean_b) * 1.5, 1000)
+fig1, ax1 = plt.subplots(figsize=(7,4))
+ax1.fill_between(x, beta.pdf(x, alpha_a, beta_a), color='skyblue', alpha=0.5)
+ax1.plot(x, beta.pdf(x, alpha_a, beta_a), color='blue', label=f"Control mean: {mean_a*100:.2f}%")
+ax1.fill_between(x, beta.pdf(x, alpha_b, beta_b), color='lightgreen', alpha=0.5)
+ax1.plot(x, beta.pdf(x, alpha_b, beta_b), color='green', label=f"Variant mean: {mean_b*100:.2f}%")
+ax1.set_xlabel('Conversion rate (%)')
+ax1.set_ylabel('Density')
+ax1.set_title('Posterior Distributions of Conversion Rates')
+ax1.legend(loc='upper right', framealpha=0.8)
+ax1.grid(alpha=0.3)
+fig1.tight_layout()
+st.pyplot(fig1)
+
+# 📊 CI Width vs Sample Size
+if show_decision_mode:
+    st.subheader("CI Width vs. Total Sample Size")
+    st.markdown("""
+    This chart shows how the credible interval width for the lift estimate decreases as total sample size increases:
+    - X-axis: Total visitors (Control + Variant)
+    - Y-axis: CI width (%) at selected confidence level
+""")
+    sizes = np.linspace(total_vis, total_vis * 3, 50, dtype=int)
+    ci_widths = []
+    for n in sizes:
+        # assume equal split
+        vis_each = n/2
+        alpha_ac = alpha_prior + conversions_a * (vis_each/visitors_a)
+        beta_ac = beta_prior + vis_each - conversions_a * (vis_each/visitors_a)
+        alpha_bc = alpha_prior + conversions_b * (vis_each/visitors_b)
+        beta_bc = beta_prior + vis_each - conversions_b * (vis_each/visitors_b)
+        # approximate CI width
+        samples_tmp = np.random.beta(alpha_bc, beta_bc, 10000) - np.random.beta(alpha_ac, beta_ac, 10000)
+        low, high = np.percentile(samples_tmp, [ci_low_pct, ci_high_pct])
+        ci_widths.append((high - low)*100)
+    fig2, ax2 = plt.subplots(figsize=(7,4))
+    ax2.plot(sizes, ci_widths, marker='o')
+    ax2.set_xlabel('Total visitors')
+    ax2.set_ylabel('CI width (%)')
+    ax2.set_title('CI Width vs. Sample Size')
+    ax2.grid(alpha=0.3)
+    fig2.tight_layout()
+    st.pyplot(fig2)
