@@ -73,17 +73,32 @@ with col6:
     beta_prior = st.number_input("Prior Beta (β)", min_value=0.01, value=1.0)
 st.markdown("---")
 
+# Theoretical CVR ranges (95% credible interval)
+alpha_a0 = alpha_prior + conversions_a
+beta_a0 = beta_prior + visitors_a - conversions_a
+alpha_b0 = alpha_prior + conversions_b
+beta_b0 = beta_prior + visitors_b - conversions_b
+control_ci_low, control_ci_high = beta.ppf(0.025, alpha_a0, beta_a0)*100, beta.ppf(0.975, alpha_a0, beta_a0)*100
+variant_ci_low, variant_ci_high = beta.ppf(0.025, alpha_b0, beta_b0)*100, beta.ppf(0.975, alpha_b0, beta_b0)*100
+st.markdown(f"**Theoretical Control CVR range (95% CI):** {control_ci_low:.2f}% – {control_ci_high:.2f}%")
+st.markdown(f"**Theoretical Variant CVR range (95% CI):** {variant_ci_low:.2f}% – {variant_ci_high:.2f}%")
+st.markdown("---")
+
 # 3. Confidence & Robustness
 st.header("3. Confidence & Robustness")
 confidence_choice = st.selectbox("Select confidence level (%)", [95, 90, 80], index=0)
 prob_threshold = confidence_choice / 100.0
 ci_tail = (1 - prob_threshold) / 2 * 100
 ci_low_pct, ci_high_pct = ci_tail, 100 - ci_tail
-robust_width_target = st.slider(
-    f"Max CI width for robust result at {confidence_choice}%", 0.005, 0.03,
-    value={95:0.01,90:0.012,80:0.015}[confidence_choice], step=0.001,
-    help="A narrow CI means a more precise estimate."
+# Slider in percent for clarity and granularity
+robust_width_pct = st.slider(
+    f"Max CI width (percentage points) for robust result at {confidence_choice}% confidence:",
+    min_value=0.5, max_value=3.0,
+    value={95:1.0, 90:1.2, 80:1.5}[confidence_choice],
+    step=0.1,
+    help="Set how wide the credible interval can be (in %) to consider results robust. Lower = more strict."
 )
+robust_width_target = robust_width_pct / 100
 st.markdown("---")
 
 # 4. Practical Impact (ROPE)
