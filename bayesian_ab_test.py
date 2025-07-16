@@ -26,8 +26,12 @@ st.markdown("---")
 
 # Optional business value
 conversion_value = st.number_input(
-    "Optional: Value per conversion (e.g. £10)", min_value=0.0, value=0.0, step=0.1,
+    "Optional: Value per conversion (e.g. £10)",
+    min_value=0.0,
+    value=0.0,
+    step=0.1,
     help="Enter how much each conversion is worth to estimate monetary impact."
+)
 
 # Removed manual holdback slider; suggestion will be calculated automatically based on data requirements
 st.markdown("---")
