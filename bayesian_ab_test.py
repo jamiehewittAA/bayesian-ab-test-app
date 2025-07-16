@@ -103,7 +103,6 @@ preset = st.selectbox(
     ],
     index=0,
 )
-)
 
 # Default mean = control CVR (if defined) else 0.05
 control_cvr_est = conversions_a / visitors_a if visitors_a > 0 else 0.05
