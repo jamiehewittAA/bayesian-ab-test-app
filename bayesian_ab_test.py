@@ -3,6 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import beta
 
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+
 # Page setup
 st.set_page_config(page_title="Bayesian CRO Test Calculator", layout="centered")
 
