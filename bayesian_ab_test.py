@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from scipy.stats import beta
 
 # Page setup
-st.set_page_config(page_title="Bayesian CRO Test Calculator", layout="centered")
+st.set_page_config(page_title="Bayesian A/B Test Calculator", layout="centered")
 
 # Title and description
-st.title("🧪 Easy Bayesian CRO Test Calculator")
+st.title("🧪 Easy Bayesian A/B Test Calculator")
 st.markdown("""
 Use **Bayesian analysis** to make clear, data-driven decisions in A/B testing.  
 No jargon—just straightforward insights.
@@ -29,12 +29,7 @@ conversion_value = st.number_input(
     "Optional: Value per conversion (e.g. £10)", min_value=0.0, value=0.0, step=0.1,
     help="Enter how much each conversion is worth to estimate monetary impact."
 )
-# Partial rollout advice percentage
-holdback_pct = st.slider(
-    "If not fully confident, hold back this % of traffic for control when rolling out Variant:",
-    min_value=0, max_value=100, value=20, step=5,
-    help="Specify what percentage of traffic to keep on control to validate uplift in live environment."
-)
+# Removed manual holdback slider; suggestion will be calculated automatically based on data requirements
 st.markdown("---")
 
 # 1. Test Data Inputs
@@ -198,13 +193,17 @@ if simple_mode:
 
 # What to do next?
 st.subheader("🛠️ What to do next?")
+# Suggest dynamic holdback percentage based on data needs
+data_ratio = days_needed / (days_needed + test_days) if (days_needed and test_days) else 0
+suggested_holdback = int(data_ratio * 100)
 if robust:
     st.info("🚀 You have robust results—roll out Variant to 100% of traffic using your CRO tool.")
 else:
-    st.info(f"⚙️ Deploy Variant to {100-holdback_pct}% of traffic, hold back {holdback_pct}% as Control to validate uplift.")
+    st.info(
+        f"⚙️ Practical approach: roll out Variant to {100-suggested_holdback}% of traffic and hold back {suggested_holdback}% as Control over the next {days_needed} days to validate uplift."
+    )
     if not no_more_traffic and days_needed:
-        st.info(f"🔍 Or collect ~{extra_vis:,} more visitors (~{days_needed} days) to achieve desired precision.")
-
+        st.info(f"🔍 Alternatively, collect ~{extra_vis:,} more visitors (~{days_needed} days) to achieve desired precision.")
 # ⏳ Days Remaining vs Precision Goal
 if show_decision_mode:
     st.markdown("---")
