@@ -216,17 +216,21 @@ if simple_mode:
         st.markdown("No clear benefit of Variant—stick with Control or test more.")
 
 # What to do next?
-# Suggest dynamic holdback percentage based on data needs
-data_ratio = days_needed / (days_needed + test_days) if (days_needed and test_days) else 0
-suggested_holdback = int(data_ratio * 100)
+st.subheader("🛠️ What to do next?")
 if robust:
     st.info("🚀 You have robust results—roll out Variant to 100% of traffic using your CRO tool.")
 else:
+    # Suggest high-exposure ramp with small control holdback for short monitoring period
+    # Calculate minimal holdback percent (at least 5%, up to suggested_holdback)
+    holdback_min = min(max(suggested_holdback, 5), 20)
+    variant_pct = 100 - holdback_min
+    # Recommend monitoring period: shorter of days_needed or test_days
+    monitor_days = days_needed if (days_needed and days_needed < test_days) else test_days
     st.info(
-        f"⚙️ Practical approach: roll out Variant to {100-suggested_holdback}% of traffic and hold back {suggested_holdback}% as Control over the next {days_needed} days to validate uplift."
+        f"⚙️ Practical approach: ramp Variant to {variant_pct}% of traffic and hold back {holdback_min}% as Control for the next {monitor_days} days to quickly validate uplift while maximizing exposure."
     )
     if not no_more_traffic and days_needed:
-        st.info(f"🔍 Alternatively, collect ~{extra_vis:,} more visitors (~{days_needed} days) to achieve desired precision.")
+        st.info(f"🔍 Alternatively, collect ~{extra_vis:,} more visitors (~{days_needed} days) to reach desired precision.")
 # ⏳ Days Remaining vs Precision Goal
 if show_decision_mode:
     st.markdown("---")
