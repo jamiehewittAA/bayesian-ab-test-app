@@ -214,9 +214,11 @@ st.pyplot(fig1)
 
 # Difference histogram
 st.subheader("📉 Difference (Variant − Control)")
-st.markdown("This chart shows the range of possible differences in conversion rate between Variant and Control.  
-Values to the **right of zero** mean the Variant converted more; values to the **left** mean the Control converted more.  
-The height represents how frequently each difference occurred in the posterior distribution.")
+st.markdown("""
+This chart shows the range of possible differences in conversion rate between Variant and Control.
+Values to the **right of zero** mean the Variant converted more; values to the **left** mean the Control converted more.
+The height represents how frequently each difference occurred in the posterior distribution.
+""")
 fig2, ax2 = plt.subplots(figsize=(6,3))
 # Shade positive vs negative areas for clarity
 ax2.hist(delta, bins=50, color='lightgray', alpha=1)
