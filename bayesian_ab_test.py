@@ -121,21 +121,7 @@ st.markdown("---")
 
 # 5. Test Duration
 st.header("5. Test Duration")
-test_days = st.number_input(
-    "Days test has been running", min_value=1, value=7,
-    help="Estimate days needed if more precision is required."
-)
-st.markdown("---")
-
-# 6. Consecutive-Day Performance
-st.header("6. Consecutive-Day Performance")
-st.markdown("Enter how many days in a row the Variant has outperformed the Control in your live metrics.
-
-More consecutive days of positive lift can boost confidence beyond the Bayesian posterior alone.")
-consecutive_up = st.number_input(
-    "Consecutive days Variant > Control:", min_value=0, value=0,
-    help="Variant’s daily conversion rate exceeded Control’s on this many consecutive days."
-)
+test_days = st.number_input("Days test has been running",min_value=1,value=7,help="Estimate days needed if more precision is required.")
 st.markdown("---")
 
 # Bayesian calculations
