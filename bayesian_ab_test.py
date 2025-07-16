@@ -129,9 +129,11 @@ st.markdown("---")
 
 # 6. Consecutive-Day Performance
 st.header("6. Consecutive-Day Performance")
-st.markdown("Enter how many days in a row the Variant has outperformed the Control in your live metrics.
+st.markdown("""
+Enter how many days in a row the Variant has outperformed the Control in your live metrics.
 
-More consecutive days of positive lift can boost confidence beyond the Bayesian posterior alone.")
+More consecutive days of positive lift can boost confidence beyond the Bayesian posterior alone.
+""")
 consecutive_up = st.number_input(
     "Consecutive days Variant > Control:", min_value=0, value=0,
     help="Variant’s daily conversion rate exceeded Control’s on this many consecutive days."
