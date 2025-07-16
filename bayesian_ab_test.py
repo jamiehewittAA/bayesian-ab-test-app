@@ -73,7 +73,13 @@ with col6:
     beta_prior = st.number_input("Prior Beta (β)", min_value=0.01, value=1.0)
 st.markdown("---")
 
-# Theoretical CVR ranges
+# 3. Confidence & Robustness
+st.header("3. Confidence & Robustness")
+confidence_choice = st.selectbox("Select confidence level (%)", [95, 90, 80], index=0)
+prob_threshold = confidence_choice / 100.0
+ci_tail = (1 - prob_threshold) / 2 * 100
+ci_low_pct, ci_high_pct = ci_tail, 100 - ci_tail
+# Insert theoretical CVR ranges based on selected CI
 alpha_a0 = alpha_prior + conversions_a
 beta_a0 = beta_prior + visitors_a - conversions_a
 alpha_b0 = alpha_prior + conversions_b
@@ -81,10 +87,8 @@ beta_b0 = beta_prior + visitors_b - conversions_b
 control_ci_low, control_ci_high = beta.ppf(ci_low_pct/100, alpha_a0, beta_a0) * 100, beta.ppf(ci_high_pct/100, alpha_a0, beta_a0) * 100
 variant_ci_low, variant_ci_high = beta.ppf(ci_low_pct/100, alpha_b0, beta_b0) * 100, beta.ppf(ci_high_pct/100, alpha_b0, beta_b0) * 100
 st.markdown(f"**Theoretical Control CVR range ({confidence_choice}% CI):** {control_ci_low:.2f}% – {control_ci_high:.2f}%")
-st.st.markdown(f"**Theoretical Variant CVR range ({confidence_choice}% CI):** {variant_ci_low:.2f}% – {variant_ci_high:.2f}%")
+st.markdown(f"**Theoretical Variant CVR range ({confidence_choice}% CI):** {variant_ci_low:.2f}% – {variant_ci_high:.2f}%")
 st.markdown("---")
-
-# 3. Confidence & Robustness
 st.header("3. Confidence & Robustness")
 confidence_choice = st.selectbox("Select confidence level (%)", [95, 90, 80], index=0)
 prob_threshold = confidence_choice / 100.0
