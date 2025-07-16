@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from scipy.stats import beta
 
 # Page setup
-st.set_page_config(page_title="Bayesian A/B Test Calculator", layout="centered")
+st.set_page_config(page_title="Bayesian CRO Test Calculator", layout="centered")
 
 # Title and description
-st.title("🧪 Easy Bayesian A/B Test Calculator")
+st.title("🧪 Bayesian CRO Test Calculator")
 st.markdown("""
 Use **Bayesian analysis** to make clear, data-driven decisions in A/B testing.  
 No jargon—just straightforward insights.
