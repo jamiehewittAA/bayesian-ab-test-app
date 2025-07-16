@@ -128,17 +128,8 @@ test_days = st.number_input(
 st.markdown("---")
 
 # 6. Consecutive-Day Performance
-st.header("6. Consecutive-Day Performance")
-st.markdown("""
-Enter how many days in a row the Variant has outperformed the Control in your live metrics.
-
-More consecutive days of positive lift can boost confidence beyond the Bayesian posterior alone.
-""")
-consecutive_up = st.number_input(
-    "Consecutive days Variant > Control:", min_value=0, value=0,
-    help="Variant’s daily conversion rate exceeded Control’s on this many consecutive days."
-)
-st.markdown("---")
+# (Removed: Day-level trend inputs can introduce dependencies and require a time-series model.)
+# Consistent positive performance is already captured by the posterior probability and credible interval width.
 
 # Bayesian calculations
 alpha_a, beta_a = alpha_prior+conversions_a, beta_prior+visitors_a-conversions_a
