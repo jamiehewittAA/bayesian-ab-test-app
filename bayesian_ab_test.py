@@ -3,20 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import beta
 
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
-
 # Page setup
-st.set_page_config(page_title="Bayesian CRO Test Calculator", layout="centered")
+st.set_page_config(page_title="Bayesian A/B Test Calculator", layout="centered")
 
 # Title and description
-st.title("🧪 Bayesian CRO Test Calculator")
+st.title("🧪 Easy Bayesian A/B Test Calculator")
 st.markdown("""
 Use **Bayesian analysis** to make clear, data-driven decisions in A/B testing.  
 No jargon—just straightforward insights.
@@ -80,20 +71,64 @@ st.markdown("---")
 
 # 2. Priors (Optional)
 st.header("2. Priors (Optional)")
-st.markdown("Adjust prior alpha/beta if you have historical knowledge; otherwise leave at 1.")
 with st.expander("What are priors?", expanded=False):
-    st.markdown("""
-    Priors shape your initial expectation:
-    - α and β form a Beta distribution for conversion rate.
-    - α=1, β=1 is neutral.  
-    - α>β tilts higher, α<β tilts lower.  
-    - Increasing both equally adds confidence around the mean.
-""")
-col5, col6 = st.columns(2)
-with col5:
-    alpha_prior = st.number_input("Prior Alpha (α)", min_value=0.01, value=1.0)
-with col6:
-    beta_prior = st.number_input("Prior Beta (β)", min_value=0.01, value=1.0)
+    st.markdown(
+        """
+        A **prior** encodes what you already believe before seeing today’s data.  
+        In a Beta‑Binomial model it uses two numbers, α and β:
+        - **Prior mean** = α / (α + β) (your expected CVR)
+        - **Strength**   = α + β      (how confident you are — like having that many *pseudo‑visitors*)
+
+        ### Should I set a prior?
+        • **No historical data?** Leave it at **Neutral** (α = 1, β = 1).  
+        • **Several similar past tests?** Choose a preset below.  
+        • **Unsure?** Start neutral; priors help only when they’re realistic.
+        """
+    )
+
+preset = st.selectbox(
+    "Choose a prior preset",
+    [
+        "Neutral (no prior)",
+        "Mild uplift expected (+2% rel, 20 pseudo‑visitors)",
+        "Historical uplift +5% rel, 50 pseudo‑visitors",
+        "Custom"
+    ],
+    index=0,
+)
+
+# Default mean = control CVR (if defined) else 0.05
+control_cvr_est = conversions_a / visitors_a if visitors_a > 0 else 0.05
+
+if preset == "Neutral (no prior)":
+    alpha_prior = 1.0
+    beta_prior  = 1.0
+elif preset == "Mild uplift expected (+2% rel, 20 pseudo‑visitors)":
+    prior_mean  = max(0.0001, control_cvr_est * 1.02)
+    strength    = 20
+    alpha_prior = prior_mean * strength
+    beta_prior  = (1 - prior_mean) * strength
+elif preset == "Historical uplift +5% rel, 50 pseudo‑visitors":
+    prior_mean  = max(0.0001, control_cvr_est * 1.05)
+    strength    = 50
+    alpha_prior = prior_mean * strength
+    beta_prior  = (1 - prior_mean) * strength
+else:
+    colp1, colp2 = st.columns(2)
+    with colp1:
+        alpha_prior = st.number_input("Prior Alpha (α)", min_value=0.01, value=1.0,
+            help="Shape parameter α of Beta prior.")
+    with colp2:
+        beta_prior  = st.number_input("Prior Beta  (β)", min_value=0.01, value=1.0,
+            help="Shape parameter β of Beta prior.")
+
+# Show effective sample size
+prior_strength = alpha_prior + beta_prior
+prior_mean     = alpha_prior / prior_strength
+st.caption(
+    f"Your prior acts like **{prior_strength:.0f} pseudo‑visitors** at a conversion rate of **{prior_mean*100:.2f}%**."
+)
+
 st.markdown("---")
 
 # 3. Confidence & Robustness
