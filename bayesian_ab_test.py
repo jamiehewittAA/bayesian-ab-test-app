@@ -32,6 +32,20 @@ conversion_value = st.number_input(
 # Removed manual holdback slider; suggestion will be calculated automatically based on data requirements
 st.markdown("---")
 
+# 🔢 Inputs
+st.header("🔢 Inputs")
+st.markdown("""
+Enter your A/B test details below. Plain-English hints:
+- **Visitors**: Number of users who saw each version; more visitors means more precise results.
+- **Conversions**: Number of goal completions (e.g., sign‑ups) per version; drives uplift estimates.
+- **Priors**: (Optional) Your existing belief about conversion rates (α/β). Leave at 1,1 for neutral.
+- **Confidence level**: How sure you want to be (e.g., 95%).
+- **CI width**: Maximum uncertainty (in %) you’ll accept for a robust conclusion.
+- **ROPE**: Smallest change you consider meaningful; differences inside this range are ignored.
+- **Test days**: Days the experiment has run so far; used to estimate additional time needed.
+- **Value per conversion**: Optional monetary value per conversion for revenue impact.
+""")
+
 # 1. Test Data Inputs
 st.header("1. Test Data")
 st.markdown("Enter visitors and conversions for Control and Variant.")
@@ -107,7 +121,34 @@ st.markdown("---")
 
 # 5. Test Duration
 st.header("5. Test Duration")
-test_days = st.number_input("Days test has been running",min_value=1,value=7,help="Estimate days needed if more precision is required.")
+test_days = st.number_input(
+    "Days test has been running", min_value=1, value=7,
+    help="Estimate days needed if more precision is required."
+)
+st.markdown("---")
+
+# 6. Consecutive-Day Performance
+st.header("6. Consecutive-Day Performance")
+st.markdown("Enter how many days in a row the Variant has outperformed the Control in your live metrics.
+
+More consecutive days of positive lift can boost confidence beyond the Bayesian posterior alone.")
+consecutive_up = st.number_input(
+    "Consecutive days Variant > Control:", min_value=0, value=0,
+    help="Variant’s daily conversion rate exceeded Control’s on this many consecutive days."
+)
+# Posterior simulation for sustained lift
+st.markdown("---")
+if consecutive_up > 0:
+    # Probability of sustained positive lift for N days = prob_b^N assuming independence
+    sustained_prob = decision_prob ** consecutive_up
+    st.subheader("Posterior Simulation: Sustained Lift")
+    st.markdown(
+        f"Based on the posterior probability of Variant > Control (P={decision_prob*100:.1f}%),"
+        f" the probability the Variant continues to outperform for {consecutive_up} consecutive days is **{sustained_prob*100:.2f}%**."
+    )
+    st.caption(
+        "This assumes each day’s performance is independent; it's an approximation to gauge sustained effect."
+    )
 st.markdown("---")
 
 # Bayesian calculations
@@ -202,20 +243,6 @@ if simple_mode:
         st.markdown("No clear benefit of Variant—stick with Control or test more.")
 
 # What to do next?
-st.subheader("🛠️ What to do next?")
-# Suggest dynamic holdback percentage based on data needs
-
-if simple_mode:
-    st.subheader("🔍 What does this mean?")
-    if robust:
-        st.markdown("Result is robust: confident in direction and magnitude.")
-    elif decision_prob>=prob_threshold:
-        st.markdown("Variant likely better, but effect size is uncertain.")
-    else:
-        st.markdown("No clear benefit of Variant—stick with Control or test more.")
-
-# What to do next?
-st.subheader("🛠️ What to do next?")
 # Suggest dynamic holdback percentage based on data needs
 data_ratio = days_needed / (days_needed + test_days) if (days_needed and test_days) else 0
 suggested_holdback = int(data_ratio * 100)
