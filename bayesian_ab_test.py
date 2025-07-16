@@ -74,6 +74,7 @@ with col6:
 st.markdown("---")
 
 # 3. Confidence & Robustness
+# 3. Confidence & Robustness
 st.header("3. Confidence & Robustness")
 confidence_choice = st.selectbox("Select confidence level (%)", [95, 90, 80], index=0)
 prob_threshold = confidence_choice / 100.0
@@ -89,11 +90,6 @@ variant_ci_low, variant_ci_high = beta.ppf(ci_low_pct/100, alpha_b0, beta_b0) * 
 st.markdown(f"**Theoretical Control CVR range ({confidence_choice}% CI):** {control_ci_low:.2f}% – {control_ci_high:.2f}%")
 st.markdown(f"**Theoretical Variant CVR range ({confidence_choice}% CI):** {variant_ci_low:.2f}% – {variant_ci_high:.2f}%")
 st.markdown("---")
-st.header("3. Confidence & Robustness")
-confidence_choice = st.selectbox("Select confidence level (%)", [95, 90, 80], index=0)
-prob_threshold = confidence_choice / 100.0
-ci_tail = (1 - prob_threshold) / 2 * 100
-ci_low_pct, ci_high_pct = ci_tail, 100 - ci_tail
 # Slider in percent for clarity and granularity
 robust_width_pct = st.slider(
     f"Max CI width (percentage points) for robust result at {confidence_choice}% confidence:",
@@ -104,8 +100,7 @@ robust_width_pct = st.slider(
 )
 robust_width_target = robust_width_pct / 100
 st.markdown("---")
-
-# 4. Practical Impact (ROPE)
+# 4. Practical Impact (ROPE) (ROPE)
 st.header("4. Practical Impact (ROPE)")
 practical_display = st.slider(
     "Ignore changes smaller than (%)", 0.0, 5.0, 0.5, 0.1,
