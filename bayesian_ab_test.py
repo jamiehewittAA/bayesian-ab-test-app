@@ -175,8 +175,18 @@ if conversion_value>0:
     annual_avg_gain  = monthly_avg_gain * 12
     annual_high_gain = monthly_high_gain * 12
 
-    st.header("💼 Financial Projections Scenarios")
-    st.markdown(
+    # Financial Projections Scenarios
+st.header("💼 Financial Projections Scenarios")
+st.markdown(
+    """
+    **Note:** The figures below use the **credible interval for the *difference* in conversion rates** (lift) rather than individual conversion rate ranges.  
+    This directly represents your incremental gain or loss:
+    - **Worst-case lift** (lower CI bound): the minimal realistic uplift, which may be negative.  
+    - **Expected lift** (posterior mean): the most likely uplift.  
+    - **Best-case lift** (upper CI bound): the maximal realistic uplift.  
+    """
+)
+# Monthly/annual gain calculations follow...(
         """
         Estimate potential revenue impact per month and year under different lift scenarios:
 
@@ -217,16 +227,15 @@ if simple_mode:
     if robust:
         st.markdown("Your result is robust: you can be confident in both the direction and size of the effect.")
     elif decision_prob >= prob_threshold:
-        # Variant likely better but CI may include negative effects
         if ci_low < 0:
             st.markdown(
-                "Variant likely outperforms Control, but the credible interval still includes negative values, "
-                "so the true effect could be small or even negative."
+                "Variant likely outperforms Control, but the credible interval spans below zero, meaning there’s still a risk of a negative effect.  
+                This aligns with the financial scenarios showing a possible worst-case loss."
             )
         else:
             st.markdown("Variant likely outperforms Control, and even the lower bound of the credible interval is positive—true effect should be beneficial.")
     else:
-        st.markdown("No clear benefit of Variant—there’s a substantial chance the Variant could underperform Control.")
+        st.markdown("No clear benefit of Variant—there’s a substantial chance the Variant could underperform Control, as shown in the worst-case financial scenario.")
 
 # What to do next?
 st.subheader("🛠️ What to do next?")
