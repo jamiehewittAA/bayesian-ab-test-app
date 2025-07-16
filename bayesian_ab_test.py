@@ -245,10 +245,10 @@ if show_decision_mode:
     st.subheader("⏳ How Many More Days to Reach Your Precision Goal?")
     st.markdown(
         """
-        This chart shows **how many more days** you'll need on your current traffic levels to achieve the desired **credible interval (CI) width** you set above.
+        This chart shows **additional days** needed on top of your current test duration to achieve the desired **credible interval (CI) width**.
         - The **blue line** plots days remaining vs. different CI width thresholds.
         - The **red dashed line** marks the CI width you selected.
-        - The **red dot** shows your current position (CI width × days remaining).
+        - The **red dot** shows the **remaining** days needed for your chosen CI width.
         """
     )
     robust_widths = np.linspace(0.005, 0.03, 50)
@@ -262,9 +262,13 @@ if show_decision_mode:
     current_x = robust_width_target * 100
     idx = np.argmin(np.abs(robust_widths - robust_width_target))
     current_y = days_remaining[idx]
-    ax3.axvline(current_x, color='red', linestyle='--', linewidth=1.5, label='Your CI Width')
-    ax3.scatter([current_x], [current_y], color='red', zorder=5)
-    ax3.text(current_x + 0.05, current_y, f"{current_x:.1f}% CI → {int(current_y)} days", va='center')
+    # vertical line and dot for chosen threshold
+    ax3.axvline(current_x, color='red', linestyle='--', linewidth=1.5, label='Chosen CI Width')
+    ax3.scatter([current_x], [current_y], color='red', zorder=5, label='Remaining Days')
+    # mark elapsed test days
+    ax3.scatter([current_x], [0], color='blue', marker='X', s=100, label='Days Elapsed')
+    ax3.text(current_x + 0.05, 0, f"{test_days} days run", va='bottom')
+    ax3.text(current_x + 0.05, current_y, f"+{int(current_y)} days more", va='bottom')
     
     ax3.set_xlabel("CI Width Threshold (%)")
     ax3.set_ylabel("Days Remaining")
@@ -274,3 +278,4 @@ if show_decision_mode:
     ax3.legend()
     fig3.tight_layout()
     st.pyplot(fig3)
+    st.caption(f"You have run {test_days} days so far; the red dot shows how many additional days are needed.")
