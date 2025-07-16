@@ -91,10 +91,14 @@ preset = st.selectbox(
     [
         "Neutral (no prior)",
         "Mild uplift expected (+2% rel, 20 pseudo‑visitors)",
-        "Historical uplift +5% rel, 50 pseudo‑visitors",
+        "Moderate uplift expected (+3.5% rel, 30 pseudo‑visitors)",
+        "Strong uplift expected (+5% rel, 50 pseudo‑visitors)",
+        "Very strong uplift expected (+7.5% rel, 70 pseudo‑visitors)",
+        "Exceptional uplift expected (+10% rel, 100 pseudo‑visitors)",
         "Custom"
     ],
     index=0,
+)
 )
 
 # Default mean = control CVR (if defined) else 0.05
@@ -108,7 +112,26 @@ elif preset == "Mild uplift expected (+2% rel, 20 pseudo‑visitors)":
     strength    = 20
     alpha_prior = prior_mean * strength
     beta_prior  = (1 - prior_mean) * strength
-elif preset == "Historical uplift +5% rel, 50 pseudo‑visitors":
+elif preset == "Moderate uplift expected (+3.5% rel, 30 pseudo‑visitors)":
+    prior_mean  = max(0.0001, control_cvr_est * 1.035)
+    strength    = 30
+    alpha_prior = prior_mean * strength
+    beta_prior  = (1 - prior_mean) * strength
+elif preset == "Strong uplift expected (+5% rel, 50 pseudo‑visitors)":
+    prior_mean  = max(0.0001, control_cvr_est * 1.05)
+    strength    = 50
+    alpha_prior = prior_mean * strength
+    beta_prior  = (1 - prior_mean) * strength
+elif preset == "Very strong uplift expected (+7.5% rel, 70 pseudo‑visitors)":
+    prior_mean  = max(0.0001, control_cvr_est * 1.075)
+    strength    = 70
+    alpha_prior = prior_mean * strength
+    beta_prior  = (1 - prior_mean) * strength
+elif preset == "Exceptional uplift expected (+10% rel, 100 pseudo‑visitors)":
+    prior_mean  = max(0.0001, control_cvr_est * 1.10)
+    strength    = 100
+    alpha_prior = prior_mean * strength
+    beta_prior  = (1 - prior_mean) * strength
     prior_mean  = max(0.0001, control_cvr_est * 1.05)
     strength    = 50
     alpha_prior = prior_mean * strength
