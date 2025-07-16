@@ -231,11 +231,13 @@ if simple_mode:
                     """
                 )
         else:
-            st.markdown("Variant likely outperforms Control, and even the lower bound of the credible interval is positive—true effect should be beneficial.")
+            st.markdown(
+                "Variant likely outperforms Control, and even the lower bound of the credible interval is positive—true effect should be beneficial."
+            )
     else:
-            st.markdown("Variant likely outperforms Control, and even the lower bound of the credible interval is positive—true effect should be beneficial.")
-    else:
-        st.markdown("No clear benefit of Variant—there’s a substantial chance the Variant could underperform Control, as shown in the worst-case financial scenario.")
+        st.markdown(
+            "No clear benefit of Variant—there’s a substantial chance the Variant could underperform Control, as shown in the worst-case financial scenario."
+        )
 
 # What to do next?
 st.subheader("🛠️ What to do next?")
