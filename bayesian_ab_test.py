@@ -160,12 +160,20 @@ robust=statsig and (ci_width<robust_width_target) and (rope_overlap<0.95)
 
 # Posterior simulation for sustained lift
 if consecutive_up > 0:
+    # Probability of sustained lift over N days (independent approximation)
     sustained_prob = decision_prob ** consecutive_up
     st.subheader("Posterior Simulation: Sustained Lift")
     st.markdown(
-        f"Based on P(Variant > Control) = {decision_prob*100:.1f}%, the chance it continues for {consecutive_up} days is **{sustained_prob*100:.2f}%**."
+        f"If each day is independent with P(Variant>Control) = {decision_prob*100:.1f}%,\
+        the chance of seeing {consecutive_up} days in a row of Variant outperforming is {sustained_prob*100:.2f}%.")
+    st.markdown(
+        """
+        **Why it decreases:** Even if Variant is likely to win on a single day, the probability of winning many days in a row falls off (\(p^N\)).  
+        A long streak is strong evidence, but inherently rarer.  
+        Use this as a rough check—true day-to-day dependence may change the calculation.
+        """
     )
-    st.caption("Assumes daily independence; approximate indicator of sustained effect.")
+    st.caption("This is an approximation assuming day-to-day independence; interpret cautiously.")
 
 # Estimate data needs
 total_vis=visitors_a+visitors_b
