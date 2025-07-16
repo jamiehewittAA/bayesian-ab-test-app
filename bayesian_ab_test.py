@@ -13,24 +13,36 @@ st.markdown('---')
 
 # Inputs
 st.header("🔢 Inputs")
+st.markdown("""
+Enter your A/B test data and settings:
+- **Visitors**: How many users saw each version (Control/Variant).
+- **Conversions**: How many completed your goal (e.g., sign-up, purchase).
+- **Priors**: (Optional) Encode any existing belief about conversion rates.
+- **Confidence level**: How sure you want to be (95%, 90%, or 80%).
+- **CI width**: Maximum acceptable uncertainty for a robust result.
+- **ROPE**: The minimal difference you consider meaningful.
+- **Test days**: How many days the test has run so far.
+- **Value per conversion**: (Optional) For revenue impact estimates.
+""" )
 col1, col2 = st.columns(2)
 with col1:
-    visitors_a = st.number_input("Visitors (Control)", min_value=1, value=1000)
-    conversions_a = st.number_input("Conversions (Control)", min_value=0, value=50)
+    visitors_a = st.number_input(
+        "Visitors (Control)", min_value=1, value=1000,
+        help="Number of users who saw the Control version. More visitors → more precise results."
+    )
+    conversions_a = st.number_input(
+        "Conversions (Control)", min_value=0, value=50,
+        help="Number of conversions from Control. Drives uplift estimates."
+    )
 with col2:
-    visitors_b = st.number_input("Visitors (Variant)", min_value=1, value=1000)
-    conversions_b = st.number_input("Conversions (Variant)", min_value=0, value=70)
-
-alpha_prior = st.number_input("Prior alpha (α)", min_value=0.01, value=1.0)
-beta_prior = st.number_input("Prior beta (β)", min_value=0.01, value=1.0)
-confidence = st.selectbox("Confidence level (%)", [95, 90, 80])
-CI = confidence / 100.0
-ci_lower = (1 - CI) / 2 * 100
-ci_upper = 100 - ci_lower
-max_ci_width = st.slider(f"Max CI width (%) for robust result", 0.5, 3.0, 1.0)
-rope = st.slider("ROPE (%): Ignore changes smaller than", 0.0, 5.0, 0.5)
-test_days = st.number_input("Days test has run", min_value=1, value=7)
-conversion_value = st.number_input("Value per conversion (£)", min_value=0.0, value=0.0, step=0.1)
+    visitors_b = st.number_input(
+        "Visitors (Variant)", min_value=1, value=1000,
+        help="Number of users who saw the Variant."
+    )
+    conversions_b = st.number_input(
+        "Conversions (Variant)", min_value=0, value=70,
+        help="Number of conversions from Variant."
+    )
 st.markdown('---')
 
 # Bayesian calculations
