@@ -268,7 +268,7 @@ if show_decision_mode:
     - **Red dashed line**: your selected CI width
     - **Red dot**: days still needed for that width
     - **Blue X**: days already run
-    """")
+    """))
     robust_widths = np.linspace(0.005, 0.03, 50)
     scale_factors = (ci_width / robust_widths) ** 2
     suggested_total = total_vis * scale_factors
