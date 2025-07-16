@@ -200,10 +200,11 @@ else:
 # Posterior distributions
 st.markdown("---")
 st.header("📈 Posterior Distributions of Conversion Rates")
-st.markdown(
-    "This chart shows the full range of conversion rates the data support for Control and Variant.  
-    The shaded areas represent the posterior distributions; peaks show the most likely rates."
-)
+# Introduce plot
+st.markdown("""
+This chart shows the full range of conversion rates the data support for Control and Variant.  
+The shaded areas represent the posterior distributions; peaks show the most likely rates.
+""")
 
 # Prepare plot
 max_rate = max(mean_a, mean_b)
