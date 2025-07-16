@@ -215,11 +215,24 @@ if simple_mode:
         st.markdown("Your result is robust: you can be confident in both the direction and size of the effect.")
     elif decision_prob >= prob_threshold:
         if ci_low < 0:
-            st.markdown("""
-Variant likely outperforms Control, but the credible interval spans below zero, meaning there’s still a risk of a negative effect.
-This aligns with the financial scenarios showing a possible worst-case loss.
-""")
+            if conversion_value > 0:
+                st.markdown(
+                    """
+                    Variant likely outperforms Control, but the credible interval spans below zero,
+                    meaning there’s still a risk of a negative effect.
+                    This aligns with the financial scenarios showing a possible worst-case loss.
+                    """
+                )
+            else:
+                st.markdown(
+                    """
+                    Variant likely outperforms Control, but the credible interval spans below zero,
+                    meaning there’s still a risk of a negative effect.
+                    """
+                )
         else:
+            st.markdown("Variant likely outperforms Control, and even the lower bound of the credible interval is positive—true effect should be beneficial.")
+    else:
             st.markdown("Variant likely outperforms Control, and even the lower bound of the credible interval is positive—true effect should be beneficial.")
     else:
         st.markdown("No clear benefit of Variant—there’s a substantial chance the Variant could underperform Control, as shown in the worst-case financial scenario.")
