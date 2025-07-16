@@ -199,20 +199,66 @@ else:
 
 # Posterior distributions
 st.markdown("---")
-st.header("📈 Posterior Distributions")
+st.header("📈 Posterior Distributions of Conversion Rates")
+st.markdown(
+    "This chart shows the full range of conversion rates the data support for Control and Variant.  
+    The shaded areas represent the posterior distributions; peaks show the most likely rates."
+)
+
+# Prepare plot
 max_rate = max(mean_a, mean_b)
 x = np.linspace(0, max_rate*1.5, 1000)
-fig1, ax1 = plt.subplots(figsize=(6,3))
-ax1.plot(x, beta.pdf(x, alpha_a, beta_a), label='Control')
-ax1.plot(x, beta.pdf(x, alpha_b, beta_b), label='Variant')
+fig1, ax1 = plt.subplots(figsize=(7,4))
+
+# Plot distributions with shading
+ax1.fill_between(x, beta.pdf(x, alpha_a, beta_a), color='skyblue', alpha=0.5)
+ax1.plot(x, beta.pdf(x, alpha_a, beta_a), color='blue', label='Control')
+ax1.fill_between(x, beta.pdf(x, alpha_b, beta_b), color='lightgreen', alpha=0.5)
+ax1.plot(x, beta.pdf(x, alpha_b, beta_b), color='green', label='Variant')
+
+# Mark means
+ax1.axvline(mean_a, color='blue', linestyle='--', label=f"Control mean: {mean_a*100:.2f}%")
+ax1.axvline(mean_b, color='green', linestyle='--', label=f"Variant mean: {mean_b*100:.2f}%")
+
+# Styling
+ticks = np.linspace(0, max_rate*1.5, 6)
+ax1.set_xticks(ticks)
+ax1.set_xticklabels([f"{t*100:.1f}%" for t in ticks])
 ax1.set_xlabel('Conversion rate (%)')
-xticks = np.linspace(0, max_rate*1.5, 6)
-ax1.set_xticks(xticks)
-ax1.set_xticklabels([f"{tick*100:.2f}%" for tick in xticks])
-ax1.legend()
+ax1.set_ylabel('Density')
+ax1.set_title('Posterior Distributions of Conversion Rates', pad=20)
+ax1.grid(alpha=0.3)
+ax1.legend(loc='upper right', framealpha=0.8)
+fig1.tight_layout()
 st.pyplot(fig1)
 
 # Difference histogram
+st.subheader("📉 Posterior Distribution of Difference: Variant − Control")
+st.markdown(
+    "This chart shows the distribution of possible differences in conversion rate (Variant minus Control).  
+    Bars to the right of zero indicate the Variant is better; bars to the left indicate the Control is better."
+)
+fig2, ax2 = plt.subplots(figsize=(7,4))
+# Plot histogram
+data = delta
+tot_bins = 50
+counts, bins, patches = ax2.hist(data, bins=tot_bins, color='lightgray', edgecolor='white')
+# Color negative and positive
+for patch, edge in zip(patches, bins[:-1]):
+    patch.set_facecolor('salmon' if edge < 0 else 'lightgreen')
+# Zero line
+ax2.axvline(0, color='black', linestyle='--', linewidth=1)
+# Annotations
+ax2.text(max_rate*1.0, max(counts)*0.9, f"P(Variant > Control): {decision_prob*100:.1f}%", color='darkgreen', fontsize=10)
+ax2.text(-max_rate*0.2, max(counts)*0.9, f"P(Control > Variant): {(1-decision_prob)*100:.1f}%", color='darkred', fontsize=10)
+
+# Styling
+ax2.set_xlabel('Conversion rate difference (%)')
+ax2.set_ylabel('Frequency')
+ax2.set_title('Posterior Distribution of the Difference', pad=20)
+ax2.grid(alpha=0.3)
+fig2.tight_layout()
+st.pyplot(fig2)
 st.subheader("📉 Difference (Variant − Control)")
 st.markdown("""
 This chart shows how much the conversion rate is likely to change when you move from Control to Variant.  
