@@ -267,76 +267,33 @@ if show_decision_mode:
     st.markdown("---")
     st.subheader("⏳ How Many More Days to Reach Your Precision Goal?")
     st.markdown("""
-    This chart shows how many extra days you need, beyond your current run time, to achieve your chosen CI width:  
-    - **Blue dots**: days remaining at each CI width  
-    - **Red dashed line**: your selected CI width  
-    - **Red dot**: days still needed for that width  
+    This chart shows how many extra days you need, beyond\
+    your current run time, to achieve your chosen CI width:\
+    - **Blue dots**: days remaining at each CI width
+    - **Red dashed line**: your selected CI width
+    - **Red dot**: days still needed for that width
     - **Blue X**: days already run
-    """)
-    widths = np.linspace(0.5, 3.0, 50)
-    scales = (ci_width/widths)**2
-    totals = total_vis * scales
-    extras = np.maximum(totals - total_vis, 0)
-    days = np.ceil(extras/avg_vis_day)
-    fig3, ax3 = plt.subplots(figsize=(7,4))
-    ax3.plot(widths, days, marker='o', color='tab:blue', label='Days Remaining')
-    ax3.axvline(robust_width_pct, color='red', linestyle='--', label='Selected CI Width')
-    idx = np.argmin(np.abs(widths - robust_width_pct))
-    ax3.scatter([robust_width_pct], [days[idx]], color='red', s=100, label='Days Still Needed')
-    ax3.scatter([max_ci_width_pct], [0], color='tab:blue', marker='X', s=100, label='Days Elapsed')
+    """
+    )
+    robust_widths=np.linspace(0.005,0.03,50)
+    scale_factors=(ci_width/robust_widths)**2
+    suggested_total=total_vis*scale_factors
+    extra_visitors=np.maximum(suggested_total-total_vis,0)
+    days_remaining=np.ceil(extra_visitors/avg_vis_day)
+    fig3,ax3=plt.subplots(figsize=(7,4))
+    ax3.plot(robust_widths*100,days_remaining,marker='o',label='Days Remaining')
+    cx=robust_width_target*100
+    idx=np.argmin(np.abs(robust_widths-robust_width_target))
+    cy=days_remaining[idx]
+    ax3.axvline(cx,color='red',linestyle='--',linewidth=1.5,label='Selected CI Width')
+    ax3.scatter([cx],[cy],color='red',zorder=5,label='Days Still Needed')
+    ax3.scatter([cx],[0],color='blue',marker='X',s=100,label='Days Elapsed')
+    ax3.text(cx+0.1,cy,f"+{int(cy)} days",va='bottom')
+    ax3.text(cx+0.1,-max(days_remaining)*0.05,f"{test_days} days run",va='top')
     ax3.set_xlabel('CI Width Threshold (%)')
-    ax3.set_ylabel('Days Remaining')
-    ax3.set_title('Time to Desired Precision')
-    ax3.legend(loc='upper right', framealpha=0.8)
-    ax3.grid(alpha=0.3)
+    ax3.set_ylabel('Days')
+    ax3.set_title('Time to Desired Precision',pad=15)
+    ax3.legend(loc='upper right',framealpha=0.8)
     fig3.tight_layout()
     st.pyplot(fig3)
     st.caption(f"You have run {test_days} days; the red dot shows extra days needed.")
-
-# 📈 Posterior Distributions of Conversion Rates
-st.subheader("📈 Posterior Distributions of Conversion Rates")
-st.markdown("""
-This plot shows the full range of plausible conversion rates for each version:  
-- **Blue shaded area/line**: Control distribution  
-- **Green shaded area/line**: Variant distribution  
-- Dashed lines mark the mean CVR for each.
-""")
-x = np.linspace(0, max(mean_a, mean_b)*1.5, 1000)
-fig1, ax1 = plt.subplots(figsize=(7,4))
-ax1.fill_between(x, beta.pdf(x, alpha_a, beta_a), color='skyblue', alpha=0.5)
-ax1.plot(x, beta.pdf(x, alpha_a, beta_a), color='blue', label=f"Control mean {mean_a*100:.2f}%")
-ax1.fill_between(x, beta.pdf(x, alpha_b, beta_b), color='lightgreen', alpha=0.5)
-ax1.plot(x, beta.pdf(x, alpha_b, beta_b), color='green', label=f"Variant mean {mean_b*100:.2f}%")
-ax1.set_xlabel('Conversion rate (%)')
-ax1.set_ylabel('Density')
-ax1.set_title('Posterior Distributions of CVR')
-ax1.legend(loc='upper right', framealpha=0.8)
-ax1.grid(alpha=0.3)
-fig1.tight_layout()
-st.pyplot(fig1)
-
-# 📊 CI Width vs Total Sample Size
-st.subheader("📊 CI Width vs Total Sample Size")
-st.markdown("""
-Shows how your credible interval width for lift shrinks as total traffic grows:  
-- X-axis: Total visitors (Control + Variant)  
-- Y-axis: CI width (%) at your selected confidence level
-""")
-sizes = np.linspace(total_vis, total_vis*3, 50, dtype=int)
-ci_ws = []
-for n in sizes:
-    va = n/2
-    vb = n/2
-    pa = np.random.beta(alpha_prior + conversions_a*(va/visitors_a), beta_prior + va - conversions_a*(va/visitors_a), 10000)
-    pb = np.random.beta(alpha_prior + conversions_b*(vb/visitors_b), beta_prior + vb - conversions_b*(vb/visitors_b), 10000)
-    d = pb - pa
-    lw, hw = np.percentile(d, [ci_low_pct, ci_high_pct])
-    ci_ws.append((hw-lw)*100)
-fig2, ax2 = plt.subplots(figsize=(7,4))
-ax2.plot(sizes, ci_ws, marker='o', color='tab:purple')
-ax2.set_xlabel('Total visitors')
-ax2.set_ylabel('CI width (%)')
-ax2.set_title('CI Width vs Total Sample Size')
-ax2.grid(alpha=0.3)
-fig2.tight_layout()
-st.pyplot(fig2)
