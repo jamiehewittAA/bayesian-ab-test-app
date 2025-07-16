@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from scipy.stats import beta
 
 # Page setup
-st.set_page_config(page_title="Bayesian A/B Test Calculator", layout="centered")
+st.set_page_config(page_title="Bayesian CRO Test Calculator", layout="centered")
 
 # Title and description
-st.title("🧪 Easy Bayesian A/B Test Calculator")
+st.title("🧪 Easy Bayesian CRO Test Calculator")
 st.markdown("""
 Use **Bayesian analysis** to make clear, data-driven decisions in A/B testing.  
 No jargon—just straightforward insights.
@@ -28,6 +28,12 @@ st.markdown("---")
 conversion_value = st.number_input(
     "Optional: Value per conversion (e.g. £10)", min_value=0.0, value=0.0, step=0.1,
     help="Enter how much each conversion is worth to estimate monetary impact."
+)
+# Partial rollout advice percentage
+holdback_pct = st.slider(
+    "If not fully confident, hold back this % of traffic for control when rolling out Variant:",
+    min_value=0, max_value=100, value=20, step=5,
+    help="Specify what percentage of traffic to keep on control to validate uplift in live environment."
 )
 st.markdown("---")
 
@@ -52,10 +58,9 @@ with col4:
 cvr_control = (conversions_a / visitors_a) * 100 if visitors_a > 0 else 0
 cvr_variant = (conversions_b / visitors_b) * 100 if visitors_b > 0 else 0
 st.markdown(f"**Control CVR:** {cvr_control:.2f}%  |  **Variant CVR:** {cvr_variant:.2f}%")
-
 st.markdown("---")
 
-# 2. Prior Beliefs
+# 2. Priors (Optional)
 st.header("2. Priors (Optional)")
 st.markdown("Adjust prior alpha/beta if you have historical knowledge; otherwise leave at 1.")
 with st.expander("What are priors?", expanded=False):
@@ -74,13 +79,12 @@ with col6:
 st.markdown("---")
 
 # 3. Confidence & Robustness
-# 3. Confidence & Robustness
 st.header("3. Confidence & Robustness")
 confidence_choice = st.selectbox("Select confidence level (%)", [95, 90, 80], index=0)
 prob_threshold = confidence_choice / 100.0
 ci_tail = (1 - prob_threshold) / 2 * 100
 ci_low_pct, ci_high_pct = ci_tail, 100 - ci_tail
-# Insert theoretical CVR ranges based on selected CI
+# Theoretical CVR ranges based on selected CI
 alpha_a0 = alpha_prior + conversions_a
 beta_a0 = beta_prior + visitors_a - conversions_a
 alpha_b0 = alpha_prior + conversions_b
@@ -90,220 +94,149 @@ variant_ci_low, variant_ci_high = beta.ppf(ci_low_pct/100, alpha_b0, beta_b0) * 
 st.markdown(f"**Theoretical Control CVR range ({confidence_choice}% CI):** {control_ci_low:.2f}% – {control_ci_high:.2f}%")
 st.markdown(f"**Theoretical Variant CVR range ({confidence_choice}% CI):** {variant_ci_low:.2f}% – {variant_ci_high:.2f}%")
 st.markdown("---")
-# Slider in percent for clarity and granularity
+# Robustness threshold slider
 robust_width_pct = st.slider(
     f"Max CI width (percentage points) for robust result at {confidence_choice}% confidence:",
     min_value=0.5, max_value=3.0,
-    value={95:1.0, 90:1.2, 80:1.5}[confidence_choice],
-    step=0.1,
-    help="Set how wide the credible interval can be (in %) to consider results robust. Lower = more strict."
+    value={95:1.0,90:1.2,80:1.5}[confidence_choice], step=0.1,
+    help="Set how wide the CI can be (in %) to consider results robust. Lower = more strict."
 )
 robust_width_target = robust_width_pct / 100
 st.markdown("---")
-# 4. Practical Impact (ROPE) (ROPE)
+
+# 4. Practical Impact (ROPE)
 st.header("4. Practical Impact (ROPE)")
-practical_display = st.slider(
-    "Ignore changes smaller than (%)", 0.0, 5.0, 0.5, 0.1,
-    help="ROPE = range where differences are too small to matter."
-)
+practical_display = st.slider("Ignore changes smaller than (%)",0.0,5.0,0.5,0.1,help="ROPE = range where differences are too small to matter.")
 practical_effect = practical_display / 100.0
 st.markdown("---")
 
 # 5. Test Duration
 st.header("5. Test Duration")
-test_days = st.number_input("Days test has been running", min_value=1, value=7,
-    help="Estimate days needed if more precision is required."
-)
+test_days = st.number_input("Days test has been running",min_value=1,value=7,help="Estimate days needed if more precision is required.")
 st.markdown("---")
 
-# — Perform Bayesian Calculations —
-alpha_a = alpha_prior + conversions_a
-beta_a  = beta_prior + visitors_a - conversions_a
-alpha_b = alpha_prior + conversions_b
-beta_b  = beta_prior + visitors_b - conversions_b
+# Bayesian calculations
+alpha_a, beta_a = alpha_prior+conversions_a, beta_prior+visitors_a-conversions_a
+alpha_b, beta_b = alpha_prior+conversions_b, beta_prior+visitors_b-conversions_b
+samples=200000
+post_a = np.random.beta(alpha_a,beta_a,samples)
+post_b = np.random.beta(alpha_b,beta_b,samples)
+mean_a,mean_b=np.mean(post_a),np.mean(post_b)
+delta=post_b-post_a
 
-samples = 200_000
-post_a = np.random.beta(alpha_a, beta_a, samples)
-post_b = np.random.beta(alpha_b, beta_b, samples)
+decision_prob=np.mean(delta>0)
+abs_lift=mean_b-mean_a
+rel_lift=(abs_lift/mean_a)*100
+ci_low,ci_high=np.percentile(delta,[ci_low_pct,ci_high_pct])
+ci_width=ci_high-ci_low
+rope_overlap=np.mean((delta>-practical_effect)&(delta<practical_effect))
+statsig=(ci_low>0)|(ci_high<0)
+robust=statsig and (ci_width<robust_width_target) and (rope_overlap<0.95)
 
-mean_a, mean_b = np.mean(post_a), np.mean(post_b)
-delta = post_b - post_a
-
-decision_prob = np.mean(delta > 0)
-abs_lift      = mean_b - mean_a
-rel_lift      = (abs_lift / mean_a) * 100
-ci_low, ci_high = np.percentile(delta, [ci_low_pct, ci_high_pct])
-ci_width      = ci_high - ci_low
-rope_overlap  = np.mean((delta > -practical_effect) & (delta < practical_effect))
-statsig       = (ci_low > 0) or (ci_high < 0)
-robust        = statsig and (ci_width < robust_width_target) and (rope_overlap < 0.95)
-
-# Estimate extra visitors/time
-total_vis    = visitors_a + visitors_b
-scale_factor = (ci_width / robust_width_target) ** 2 if ci_width > 0 else 1
-needed_total = int(total_vis * scale_factor)
-extra_vis    = max(needed_total - total_vis, 0)
-avg_vis_day  = total_vis / test_days if test_days else 1
-days_needed  = int(np.ceil(extra_vis / avg_vis_day)) if avg_vis_day else None
+# Estimate data needs
+total_vis=visitors_a+visitors_b
+scale=(ci_width/robust_width_target)**2 if ci_width>0 else 1
+needed=int(total_vis*scale)
+extra_vis=max(needed-total_vis,0)
+avg_vis_day=total_vis/test_days if test_days else 1
+days_needed=int(np.ceil(extra_vis/avg_vis_day)) if avg_vis_day else None
 
 # Financial projections
-monthly_gain = annual_gain = None
-if conversion_value > 0:
-    visitors_per_month = avg_vis_day * 30
-    monthly_gain = abs_lift * conversion_value * visitors_per_month
-    annual_gain = monthly_gain * 12
+visitors_per_month=avg_vis_day*30
+if conversion_value>0:
+    monthly_gain=abs_lift*conversion_value*visitors_per_month
+    annual_gain=monthly_gain*12
+else:
+    monthly_gain=annual_gain=None
 
-# Financial modelling scenarios based on CVR ranges
-# Ensure visitors_per_month is defined
-visitors_per_month = avg_vis_day * 30
-if conversion_value > 0:
-    # Compute absolute lift bounds
-    abs_low_lift = (variant_ci_low/100) - (control_ci_high/100)
-    abs_high_lift = (variant_ci_high/100) - (control_ci_low/100)
-    abs_avg_lift = abs_lift
-
-    # Monthly and annual gains for lowest, average, highest cases
-    monthly_low_gain = abs_low_lift * conversion_value * visitors_per_month
-    monthly_avg_gain = abs_avg_lift * conversion_value * visitors_per_month
-    monthly_high_gain = abs_high_lift * conversion_value * visitors_per_month
-    annual_low_gain = monthly_low_gain * 12
-    annual_avg_gain = monthly_avg_gain * 12
-    annual_high_gain = monthly_high_gain * 12
-
+# Financial modelling scenarios
+if conversion_value>0:
+    abs_low_lift=(variant_ci_low/100)-(control_ci_high/100)
+    abs_high_lift=(variant_ci_high/100)-(control_ci_low/100)
+    abs_avg_lift=abs_lift
+    monthly_low_gain=abs_low_lift*conversion_value*visitors_per_month
+    monthly_avg_gain=abs_avg_lift*conversion_value*visitors_per_month
+    monthly_high_gain=abs_high_lift*conversion_value*visitors_per_month
+    annual_low_gain=monthly_low_gain*12
+    annual_avg_gain=monthly_avg_gain*12
+    annual_high_gain=monthly_high_gain*12
     st.header("💼 Financial Projections Scenarios")
     st.markdown(
         """
         These figures estimate monthly and annual revenue impact under different uplift scenarios:
 
-        - **Lowest uplift**: the minimal increase you could see based on your CI bounds
-        - **Average uplift**: the expected increase (mean lift)
-        - **Highest uplift**: the maximal increase you could see based on your CI bounds
+        - **Lowest uplift**: minimal increase from CI bounds
+        - **Average uplift**: expected increase
+        - **Highest uplift**: maximal increase from CI bounds
         """
     )
-    # Display scenarios
     st.markdown(f"**Lowest uplift ({abs_low_lift*100:.2f}%):** £{monthly_low_gain:,.2f}/month, £{annual_low_gain:,.2f}/year")
     st.markdown(f"**Average uplift ({abs_avg_lift*100:.2f}%):** £{monthly_avg_gain:,.2f}/month, £{annual_avg_gain:,.2f}/year")
     st.markdown(f"**Highest uplift ({abs_high_lift*100:.2f}%):** £{monthly_high_gain:,.2f}/month, £{annual_high_gain:,.2f}/year")
 else:
     st.info("💡 Enter a 'Value per conversion' to see financial projections scenarios.")
 
-# Continue with visualizations
 st.markdown("---")
 # Decision logic
-if decision_prob >= prob_threshold:
+if decision_prob>=prob_threshold:
     st.success("✅ Variant likely outperforms Control.")
-elif (1 - decision_prob) >= prob_threshold:
+elif(1-decision_prob)>=prob_threshold:
     st.error("⛔ Control likely outperforms Variant — do NOT implement Variant.")
-    st.caption("High confidence that the control is better. Revert traffic to Control or test new ideas.")
+    st.caption("High confidence Control is better. Revert traffic or test new ideas.")
 else:
-    st.warning("⚠️ Insufficient confidence that Variant outperforms Control.")
-# Robustness check
-if robust:
-    st.success("🔒 Result is robust: precise, significant, meaningful.")
-else:
-    if no_more_traffic:
-        if decision_prob >= prob_threshold:
-            st.warning("⚠️ Promising but not robust—proceed with caution.")
-            st.caption("Consider limiting exposure, monitoring metrics closely, and planning follow-up tests to verify performance before full rollout.")
-        else:
-            st.warning("⚠️ Variant underperforms Control—do NOT implement Variant but monitor and test alternatives.")
-            st.caption("Based on current data, Control is stronger. You may switch back or explore new variants.")
+    st.warning("⚠️ Insufficient confidence that Variant > Control.")
+
+# Interpretation guidance
+if simple_mode:
+    st.subheader("🔍 What does this mean?")
+    if robust:
+        st.markdown("Result is robust: confident in direction and magnitude.")
+    elif decision_prob>=prob_threshold:
+        st.markdown("Variant likely better, but effect size is uncertain.")
     else:
-        st.warning("🚧 Not yet robust—consider collecting more data.")
-        if days_needed:
-            st.markdown(f"🔍 Collect ~{extra_vis:,} more visitors (~{days_needed} days) for robust results.")
+        st.markdown("No clear benefit of Variant—stick with Control or test more.")
 
-# Posterior distributions
-st.markdown("---")
-st.header("📈 Posterior Distributions of Conversion Rates")
-# Introduce plot
-st.markdown("""
-This chart shows the full range of conversion rates the data support for Control and Variant.  
-The shaded areas represent the posterior distributions; peaks show the most likely rates.
-""")
-
-# Prepare plot
-max_rate = max(mean_a, mean_b)
-x = np.linspace(0, max_rate*1.5, 1000)
-fig1, ax1 = plt.subplots(figsize=(7,4))
-
-# Plot distributions with shading
-ax1.fill_between(x, beta.pdf(x, alpha_a, beta_a), color='skyblue', alpha=0.5)
-ax1.plot(x, beta.pdf(x, alpha_a, beta_a), color='blue', label='Control')
-ax1.fill_between(x, beta.pdf(x, alpha_b, beta_b), color='lightgreen', alpha=0.5)
-ax1.plot(x, beta.pdf(x, alpha_b, beta_b), color='green', label='Variant')
-
-# Mark means
-ax1.axvline(mean_a, color='blue', linestyle='--', label=f"Control mean: {mean_a*100:.2f}%")
-ax1.axvline(mean_b, color='green', linestyle='--', label=f"Variant mean: {mean_b*100:.2f}%")
-
-# Styling
-ticks = np.linspace(0, max_rate*1.5, 6)
-ax1.set_xticks(ticks)
-ax1.set_xticklabels([f"{t*100:.1f}%" for t in ticks])
-ax1.set_xlabel('Conversion rate (%)')
-ax1.set_ylabel('Density')
-ax1.set_title('Posterior Distributions of Conversion Rates', pad=20)
-ax1.grid(alpha=0.3)
-ax1.legend(loc='upper right', framealpha=0.8)
-fig1.tight_layout()
-st.pyplot(fig1)
-
-# Difference histogram
-st.subheader("📉 Posterior Distribution of Difference: Variant − Control")
-st.markdown("""
-This chart shows how the conversion rate difference (Variant − Control) is distributed according to the posterior samples:
-- **Right of zero**: Variant likely better
-- **Left of zero**: Control likely better
-""")
-fig2, ax2 = plt.subplots(figsize=(7,4))
-counts, bins, patches = ax2.hist(delta, bins=50, edgecolor='white')
-# Color bars
-for patch, edge in zip(patches, bins[:-1]):
-    patch.set_facecolor('lightgreen' if edge > 0 else 'salmon')
-# Zero line
-ax2.axvline(0, color='black', linestyle='--', linewidth=1)
-# Annotate probabilities
-ax2.text(bins[-1]*0.6, max(counts)*0.9, f"P(Variant>Control): {decision_prob*100:.1f}%", color='darkgreen')
-ax2.text(bins[1]*0.6, max(counts)*0.9, f"P(Control>Variant): {(1-decision_prob)*100:.1f}%", color='darkred')
-# Labels
-ax2.set_xlabel('Conversion rate difference (%)')
-ax2.set_ylabel('Frequency')
-ax2.set_title('Posterior Distribution of the Difference', pad=15)
-ax2.grid(alpha=0.3)
-fig2.tight_layout()
-st.pyplot(fig2)
+# What to do next?
+st.subheader("🛠️ What to do next?")
+if robust:
+    st.info("🚀 You have robust results—roll out Variant to 100% of traffic using your CRO tool.")
+else:
+    st.info(f"⚙️ Deploy Variant to {100-holdback_pct}% of traffic, hold back {holdback_pct}% as Control to validate uplift.")
+    if not no_more_traffic and days_needed:
+        st.info(f"🔍 Or collect ~{extra_vis:,} more visitors (~{days_needed} days) to achieve desired precision.")
 
 # ⏳ Days Remaining vs Precision Goal
 if show_decision_mode:
     st.markdown("---")
     st.subheader("⏳ How Many More Days to Reach Your Precision Goal?")
     st.markdown("""
-    This chart shows how many extra days you need, beyond your current run time, to achieve your chosen CI width:
+    This chart shows how many extra days you need, beyond\
+    your current run time, to achieve your chosen CI width:\
     - **Blue dots**: days remaining at each CI width
     - **Red dashed line**: your selected CI width
     - **Red dot**: days still needed for that width
     - **Blue X**: days already run
-    """)
-    robust_widths = np.linspace(0.005, 0.03, 50)
-    scale_factors = (ci_width / robust_widths) ** 2
-    suggested_total = total_vis * scale_factors
-    extra_visitors = np.maximum(suggested_total - total_vis, 0)
-    days_remaining = np.ceil(extra_visitors / avg_vis_day)
-    fig3, ax3 = plt.subplots(figsize=(7,4))
-    ax3.plot(robust_widths*100, days_remaining, marker='o', label='Days Remaining')
-    current_x = robust_width_target*100
-    idx = np.argmin(np.abs(robust_widths - robust_width_target))
-    current_y = days_remaining[idx]
-    ax3.axvline(current_x, color='red', linestyle='--', linewidth=1.5, label='Selected CI Width')
-    ax3.scatter([current_x], [current_y], color='red', zorder=5, label='Days Still Needed')
-    ax3.scatter([current_x], [0], color='blue', marker='X', s=100, label='Days Elapsed')
-    ax3.text(current_x+0.1, current_y, f"+{int(current_y)} days", va='bottom')
-    ax3.text(current_x+0.1, -max(days_remaining)*0.05, f"{test_days} days run", va='top')
+    """
+    )
+    robust_widths=np.linspace(0.005,0.03,50)
+    scale_factors=(ci_width/robust_widths)**2
+    suggested_total=total_vis*scale_factors
+    extra_visitors=np.maximum(suggested_total-total_vis,0)
+    days_remaining=np.ceil(extra_visitors/avg_vis_day)
+    fig3,ax3=plt.subplots(figsize=(7,4))
+    ax3.plot(robust_widths*100,days_remaining,marker='o',label='Days Remaining')
+    cx=robust_width_target*100
+    idx=np.argmin(np.abs(robust_widths-robust_width_target))
+    cy=days_remaining[idx]
+    ax3.axvline(cx,color='red',linestyle='--',linewidth=1.5,label='Selected CI Width')
+    ax3.scatter([cx],[cy],color='red',zorder=5,label='Days Still Needed')
+    ax3.scatter([cx],[0],color='blue',marker='X',s=100,label='Days Elapsed')
+    ax3.text(cx+0.1,cy,f"+{int(cy)} days",va='bottom')
+    ax3.text(cx+0.1,-max(days_remaining)*0.05,f"{test_days} days run",va='top')
     ax3.set_xlabel('CI Width Threshold (%)')
     ax3.set_ylabel('Days')
-    ax3.set_title('Time to Desired Precision', pad=15)
-    ax3.legend(loc='upper right', framealpha=0.8)
+    ax3.set_title('Time to Desired Precision',pad=15)
+    ax3.legend(loc='upper right',framealpha=0.8)
     fig3.tight_layout()
     st.pyplot(fig3)
     st.caption(f"You have run {test_days} days; the red dot shows extra days needed.")
