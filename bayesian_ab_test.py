@@ -216,9 +216,20 @@ if show_decision_mode:
     suggested_total = total_vis * scale_factors
     extra_visitors = np.maximum(suggested_total - total_vis, 0)
     days_remaining = np.ceil(extra_visitors / avg_vis_day)
+    
     fig3, ax3 = plt.subplots(figsize=(6,3))
-    ax3.plot(robust_widths * 100, days_remaining, marker='o')
+    ax3.plot(robust_widths * 100, days_remaining, marker='o', label='Days Remaining')
+    # Mark the user-selected CI width threshold
+    current_x = robust_width_target * 100
+    # Find nearest days remaining for current threshold
+    idx = np.argmin(np.abs(robust_widths - robust_width_target))
+    current_y = days_remaining[idx]
+    ax3.axvline(current_x, color='red', linestyle='--', label='Your CI Width Threshold')
+    ax3.scatter([current_x], [current_y], color='red')
+    ax3.text(current_x, current_y, f" {current_x:.2f}% CI, {int(current_y)} days", va='bottom', ha='left')
+    
     ax3.set_xlabel("Robustness Threshold (% CI width)")
     ax3.set_ylabel("Estimated Days Remaining")
     ax3.set_title("Estimated Test Duration vs Robustness")
+    ax3.legend()
     st.pyplot(fig3)
