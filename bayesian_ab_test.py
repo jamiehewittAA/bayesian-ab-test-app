@@ -51,13 +51,7 @@ with col4:
 # Display current conversion rates
 cvr_control = (conversions_a / visitors_a) * 100 if visitors_a > 0 else 0
 cvr_variant = (conversions_b / visitors_b) * 100 if visitors_b > 0 else 0
-# Calculate theoretical lowest and highest CVR from posterior
-control_ci_low, control_ci_high = beta.ppf(ci_low_pct/100, alpha_a, beta_a)*100, beta.ppf(ci_high_pct/100, alpha_a, beta_a)*100
-variant_ci_low, variant_ci_high = beta.ppf(ci_low_pct/100, alpha_b, beta_b)*100, beta.ppf(ci_high_pct/100, alpha_b, beta_b)*100
-# Display rates and ranges
 st.markdown(f"**Control CVR:** {cvr_control:.2f}%  |  **Variant CVR:** {cvr_variant:.2f}%")
-st.markdown(f"**Control CVR range ({confidence_choice}% CI):** {control_ci_low:.2f}% – {control_ci_high:.2f}%")
-st.markdown(f"**Variant CVR range ({confidence_choice}% CI):** {variant_ci_low:.2f}% – {variant_ci_high:.2f}%")
 st.markdown("---")(f"**Control CVR:** {cvr_control:.2f}%  |  **Variant CVR:** {cvr_variant:.2f}%")
 st.markdown("---")
 
