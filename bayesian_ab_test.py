@@ -235,94 +235,59 @@ st.pyplot(fig1)
 
 # Difference histogram
 st.subheader("📉 Posterior Distribution of Difference: Variant − Control")
-st.markdown(
-    "This chart shows the distribution of possible differences in conversion rate (Variant minus Control).  
-    Bars to the right of zero indicate the Variant is better; bars to the left indicate the Control is better."
-)
+st.markdown("""
+This chart shows how the conversion rate difference (Variant − Control) is distributed according to the posterior samples:
+- **Right of zero**: Variant likely better
+- **Left of zero**: Control likely better
+""")
 fig2, ax2 = plt.subplots(figsize=(7,4))
-# Plot histogram
-data = delta
-tot_bins = 50
-counts, bins, patches = ax2.hist(data, bins=tot_bins, color='lightgray', edgecolor='white')
-# Color negative and positive
+counts, bins, patches = ax2.hist(delta, bins=50, edgecolor='white')
+# Color bars
 for patch, edge in zip(patches, bins[:-1]):
-    patch.set_facecolor('salmon' if edge < 0 else 'lightgreen')
+    patch.set_facecolor('lightgreen' if edge > 0 else 'salmon')
 # Zero line
 ax2.axvline(0, color='black', linestyle='--', linewidth=1)
-# Annotations
-ax2.text(max_rate*1.0, max(counts)*0.9, f"P(Variant > Control): {decision_prob*100:.1f}%", color='darkgreen', fontsize=10)
-ax2.text(-max_rate*0.2, max(counts)*0.9, f"P(Control > Variant): {(1-decision_prob)*100:.1f}%", color='darkred', fontsize=10)
-
-# Styling
+# Annotate probabilities
+ax2.text(bins[-1]*0.6, max(counts)*0.9, f"P(Variant>Control): {decision_prob*100:.1f}%", color='darkgreen')
+ax2.text(bins[1]*0.6, max(counts)*0.9, f"P(Control>Variant): {(1-decision_prob)*100:.1f}%", color='darkred')
+# Labels
 ax2.set_xlabel('Conversion rate difference (%)')
 ax2.set_ylabel('Frequency')
-ax2.set_title('Posterior Distribution of the Difference', pad=20)
+ax2.set_title('Posterior Distribution of the Difference', pad=15)
 ax2.grid(alpha=0.3)
 fig2.tight_layout()
 st.pyplot(fig2)
-st.subheader("📉 Difference (Variant − Control)")
-st.markdown("""
-This chart shows how much the conversion rate is likely to change when you move from Control to Variant.  
-- **Right of zero**: Variant outperforms Control.
-- **Left of zero**: Control outperforms Variant.
-The taller the bar, the more likely that difference is.
-""")
-fig2, ax2 = plt.subplots(figsize=(6,3))
-# Plot full distribution outline
-counts, bins, patches = ax2.hist(delta, bins=50, color='lightgray', alpha=1)
-# Highlight negative and positive regions
-for patch, edge in zip(patches, bins[:-1]):
-    if edge < 0:
-        patch.set_facecolor('salmon')
-    else:
-        patch.set_facecolor('lightgreen')
-# Vertical line at zero
-ax2.axvline(0, color='black', linestyle='--', linewidth=1)
-# Simplified legend
-ax2.legend(["Control better", "Variant better"], loc='upper left')
-# Clean up labels and layout
-ax2.set_xlabel('Conversion rate difference (Variant − Control)')
-ax2.set_ylabel('Frequency')
-ax2.set_title('Posterior Distribution of the Difference', pad=15)
-fig2.tight_layout()
-st.pyplot(fig2)
 
-# ⏳ Days Remaining vs Robustness Threshold
+# ⏳ Days Remaining vs Precision Goal
 if show_decision_mode:
+    st.markdown("---")
     st.subheader("⏳ How Many More Days to Reach Your Precision Goal?")
-    st.markdown(
-        """
-        This chart shows **additional days** needed on top of your current test duration to achieve the desired **credible interval (CI) width**.
-        - The **blue line** plots days remaining vs. different CI width thresholds.
-        - The **red dashed line** marks the CI width you selected.
-        - The **red dot** shows the **remaining** days needed for your chosen CI width.
-        """
-    )
+    st.markdown("""
+    This chart shows how many extra days you need, beyond your current run time, to achieve your chosen CI width:
+    - **Blue dots**: days remaining at each CI width
+    - **Red dashed line**: your selected CI width
+    - **Red dot**: days still needed for that width
+    - **Blue X**: days already run
+    """")
     robust_widths = np.linspace(0.005, 0.03, 50)
     scale_factors = (ci_width / robust_widths) ** 2
     suggested_total = total_vis * scale_factors
     extra_visitors = np.maximum(suggested_total - total_vis, 0)
     days_remaining = np.ceil(extra_visitors / avg_vis_day)
-    
-    fig3, ax3 = plt.subplots(figsize=(6,3))
-    ax3.plot(robust_widths * 100, days_remaining, marker='o', label='Days Remaining')
-    current_x = robust_width_target * 100
+    fig3, ax3 = plt.subplots(figsize=(7,4))
+    ax3.plot(robust_widths*100, days_remaining, marker='o', label='Days Remaining')
+    current_x = robust_width_target*100
     idx = np.argmin(np.abs(robust_widths - robust_width_target))
     current_y = days_remaining[idx]
-    # vertical line and dot for chosen threshold
-    ax3.axvline(current_x, color='red', linestyle='--', linewidth=1.5, label='Chosen CI Width')
-    ax3.scatter([current_x], [current_y], color='red', zorder=5, label='Remaining Days')
-    # mark elapsed test days
+    ax3.axvline(current_x, color='red', linestyle='--', linewidth=1.5, label='Selected CI Width')
+    ax3.scatter([current_x], [current_y], color='red', zorder=5, label='Days Still Needed')
     ax3.scatter([current_x], [0], color='blue', marker='X', s=100, label='Days Elapsed')
-    ax3.text(current_x + 0.05, 0, f"{test_days} days run", va='bottom')
-    ax3.text(current_x + 0.05, current_y, f"+{int(current_y)} days more", va='bottom')
-    
-    ax3.set_xlabel("CI Width Threshold (%)")
-    ax3.set_ylabel("Days Remaining")
-    ax3.set_xlim(robust_widths.min()*100, robust_widths.max()*100)
-    ax3.set_ylim(0, days_remaining.max()*1.1)
-    ax3.set_title("Time Needed to Reach Precision")
-    ax3.legend()
+    ax3.text(current_x+0.1, current_y, f"+{int(current_y)} days", va='bottom')
+    ax3.text(current_x+0.1, -max(days_remaining)*0.05, f"{test_days} days run", va='top')
+    ax3.set_xlabel('CI Width Threshold (%)')
+    ax3.set_ylabel('Days')
+    ax3.set_title('Time to Desired Precision', pad=15)
+    ax3.legend(loc='upper right', framealpha=0.8)
     fig3.tight_layout()
     st.pyplot(fig3)
-    st.caption(f"You have run {test_days} days so far; the red dot shows how many additional days are needed.")
+    st.caption(f"You have run {test_days} days; the red dot shows extra days needed.")
