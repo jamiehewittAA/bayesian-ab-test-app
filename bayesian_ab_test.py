@@ -128,8 +128,29 @@ test_days = st.number_input(
 st.markdown("---")
 
 # 6. Consecutive-Day Performance
-# (Removed: Day-level trend inputs can introduce dependencies and require a time-series model.)
-# Consistent positive performance is already captured by the posterior probability and credible interval width.
+st.header("6. Consecutive-Day Performance")
+st.markdown("""
+Enter how many days in a row the Variant has outperformed the Control in your live metrics.
+
+More consecutive days of positive lift can boost confidence beyond the Bayesian posterior alone.
+""")
+consecutive_up = st.number_input(
+    "Consecutive days Variant > Control:", min_value=0, value=0,
+    help="Variant’s daily conversion rate exceeded Control’s on this many consecutive days."
+)
+st.markdown("---")
+if consecutive_up > 0:
+    # Probability of sustained positive lift for N days = prob_b^N assuming independence
+    sustained_prob = decision_prob ** consecutive_up
+    st.subheader("Posterior Simulation: Sustained Lift")
+    st.markdown(
+        f"Based on the posterior probability of Variant > Control (P={decision_prob*100:.1f}%),"
+        f" the probability the Variant continues to outperform for {consecutive_up} consecutive days is **{sustained_prob*100:.2f}%**."
+    )
+    st.caption(
+        "This assumes each day’s performance is independent; it's an approximation to gauge sustained effect."
+    )
+st.markdown("---")
 
 # Bayesian calculations
 alpha_a, beta_a = alpha_prior+conversions_a, beta_prior+visitors_a-conversions_a
@@ -151,20 +172,12 @@ robust=statsig and (ci_width<robust_width_target) and (rope_overlap<0.95)
 
 # Posterior simulation for sustained lift
 if consecutive_up > 0:
-    # Probability of sustained lift over N days (independent approximation)
     sustained_prob = decision_prob ** consecutive_up
     st.subheader("Posterior Simulation: Sustained Lift")
     st.markdown(
-        f"If each day is independent with P(Variant>Control) = {decision_prob*100:.1f}%,\
-        the chance of seeing {consecutive_up} days in a row of Variant outperforming is {sustained_prob*100:.2f}%.")
-    st.markdown(
-        """
-        **Why it decreases:** Even if Variant is likely to win on a single day, the probability of winning many days in a row falls off (\(p^N\)).  
-        A long streak is strong evidence, but inherently rarer.  
-        Use this as a rough check—true day-to-day dependence may change the calculation.
-        """
+        f"Based on P(Variant > Control) = {decision_prob*100:.1f}%, the chance it continues for {consecutive_up} days is **{sustained_prob*100:.2f}%**."
     )
-    st.caption("This is an approximation assuming day-to-day independence; interpret cautiously.")
+    st.caption("Assumes daily independence; approximate indicator of sustained effect.")
 
 # Estimate data needs
 total_vis=visitors_a+visitors_b
