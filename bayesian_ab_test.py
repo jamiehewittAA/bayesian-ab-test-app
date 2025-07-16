@@ -214,12 +214,25 @@ st.pyplot(fig1)
 
 # Difference histogram
 st.subheader("📉 Difference (Variant − Control)")
+st.markdown("This chart shows the range of possible differences in conversion rate between Variant and Control.  
+Values to the **right of zero** mean the Variant converted more; values to the **left** mean the Control converted more.  
+The height represents how frequently each difference occurred in the posterior distribution.")
 fig2, ax2 = plt.subplots(figsize=(6,3))
-ax2.hist(delta, bins=50, color='gray', alpha=0.7)
-ax2.axvline(0, color='red', linestyle='--', label='No difference')
-ax2.set_xlabel('Difference (Variant − Control)')
+# Shade positive vs negative areas for clarity
+ax2.hist(delta, bins=50, color='lightgray', alpha=1)
+# Highlight negative and positive
+ax2.hist(delta[delta<0], bins=50, color='salmon', alpha=0.7)
+ax2.hist(delta[delta>0], bins=50, color='lightgreen', alpha=0.7)
+ax2.axvline(0, color='black', linestyle='--')
+# Annotate probability
+prob_pos = decision_prob * 100
+ax2.text(0.01, ax2.get_ylim()[1]*0.9, f"P(Variant > Control) = {prob_pos:.1f}%", color='green')
+prob_neg = (1-decision_prob)*100
+ax2.text(-0.01, ax2.get_ylim()[1]*0.9, f"P(Control > Variant) = {prob_neg:.1f}%", color='salmon')
+ax2.set_xlabel('Conversion rate difference (Variant − Control)')
 ax2.set_ylabel('Frequency')
-ax2.legend()
+ax2.set_title('Posterior Distribution of the Difference')
+ax2.legend(["All", "Control better", "Variant better"], loc='upper left')
 st.pyplot(fig2)
 
 # ⏳ Estimated Days Remaining vs Robustness Threshold
