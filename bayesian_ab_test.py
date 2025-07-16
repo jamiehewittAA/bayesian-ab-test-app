@@ -139,18 +139,6 @@ consecutive_up = st.number_input(
     help="Variant’s daily conversion rate exceeded Control’s on this many consecutive days."
 )
 st.markdown("---")
-if consecutive_up > 0:
-    # Probability of sustained positive lift for N days = prob_b^N assuming independence
-    sustained_prob = decision_prob ** consecutive_up
-    st.subheader("Posterior Simulation: Sustained Lift")
-    st.markdown(
-        f"Based on the posterior probability of Variant > Control (P={decision_prob*100:.1f}%),"
-        f" the probability the Variant continues to outperform for {consecutive_up} consecutive days is **{sustained_prob*100:.2f}%**."
-    )
-    st.caption(
-        "This assumes each day’s performance is independent; it's an approximation to gauge sustained effect."
-    )
-st.markdown("---")
 
 # Bayesian calculations
 alpha_a, beta_a = alpha_prior+conversions_a, beta_prior+visitors_a-conversions_a
