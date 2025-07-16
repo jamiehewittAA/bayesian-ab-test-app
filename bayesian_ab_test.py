@@ -222,16 +222,22 @@ data_ratio = days_needed/(days_needed+test_days) if (days_needed and test_days) 
 # Minimal holdback of 5%, capped at 10% for faster ramp
 holdback_pct = min(max(int(data_ratio*100), 5), 10)
 variant_pct = 100 - holdback_pct
-# Short monitoring: at most the smaller of 3 days or days_needed
-monitor_days = min(filter(lambda x: x is not None, [days_needed, test_days, 3])) if (days_needed and test_days) else 3
+# Short monitoring: at most the smaller of 3 days or days_needed or test_days
+monitor_days = min([d for d in [days_needed, test_days, 3] if d is not None])
+
 if robust:
+    # Primary action: full rollout
     st.info("🚀 Results are robust—roll out Variant to 100% of traffic immediately.")
 else:
+    # Primary action: fast rollout with small holdback and short monitor
     st.info(
         f"⚙️ To move fast: ramp Variant to {variant_pct}% of traffic and hold back {holdback_pct}% for Control, monitoring performance for {monitor_days} days before full rollout."
     )
-    if not no_more_traffic and days_needed:
-        st.info(f"🔍 Alternatively, collect ~{extra_vis:,} more visitors (~{days_needed} days) to reach desired precision.")
+# Secondary action: run test until robust
+# Calculate days remaining for desired precision (always available regardless of no_more_traffic)
+if days_needed:
+    st.info(f"🔍 To make data robust: collect ~{extra_vis:,} more visitors (~{days_needed} days) to reach desired precision.")
+
 # ⏳ Days Remaining vs Precision Goal
 if show_decision_mode:
     st.markdown("---")
