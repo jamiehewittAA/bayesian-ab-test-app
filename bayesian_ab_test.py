@@ -188,11 +188,6 @@ else:
     st.info("💡 Enter a 'Value per conversion' to see financial projections scenarios.")
 
 # Continue with visualizations
-st.markdown(f"**Lowest uplift ({abs_low_lift*100:.2f}%):** £{monthly_low_gain:,.2f}/month, £{annual_low_gain:,.2f}/year")
-st.markdown(f"**Average uplift ({abs_avg_lift*100:.2f}%):** £{monthly_avg_gain:,.2f}/month, £{annual_avg_gain:,.2f}/year")
-st.markdown(f"**Highest uplift ({abs_high_lift*100:.2f}%):** £{monthly_high_gain:,.2f}/month, £{annual_high_gain:,.2f}/year")
-
-# Continue with visualizations
 st.markdown("---")
 # Decision logic
 if decision_prob >= prob_threshold:
