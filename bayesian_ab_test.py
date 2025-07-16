@@ -217,6 +217,9 @@ if simple_mode:
 
 # What to do next?
 st.subheader("🛠️ What to do next?")
+# Compute suggested holdback percentage based on data needs
+data_ratio = days_needed/(days_needed+test_days) if (days_needed and test_days) else 0
+suggested_holdback = int(data_ratio*100)
 if robust:
     st.info("🚀 You have robust results—roll out Variant to 100% of traffic using your CRO tool.")
 else:
